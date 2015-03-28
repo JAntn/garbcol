@@ -1,13 +1,12 @@
+// File: gcobject.h
+// Description:
+// pointer contents class
+
 #ifndef _GC_OBJECT_H
 #define _GC_OBJECT_H
 
 #include "gc.h"
 
-
-// File: gcobject.h
-// Description:
-// Data managed by garbage collector
-//
 namespace collector {
 
 	// Has a list of connections to gcPointerBase elements 

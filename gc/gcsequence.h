@@ -1,3 +1,7 @@
+// File: gcsequence.h
+// Description:
+// base class for sequence kind containers
+
 #ifndef _GC_SEQUENCE_H
 #define _GC_SEQUENCE_H
 

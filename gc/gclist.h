@@ -1,3 +1,7 @@
+// File: gclist.h
+// Description:
+// stl list wrapper
+
 #ifndef _GC_LIST_H
 #define _GC_LIST_H
 #include "gcsequence.h"

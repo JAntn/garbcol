@@ -1,11 +1,11 @@
+// File: gcpointer.h
+// Description:
+// define smart pointer classes
+
 #ifndef _GC_POINTER_H
 #define _GC_POINTER_H
 
 #include "gc.h"
-
-// File: gcpointer.h
-// Description:
-// define smart pointer classes
 
 namespace collector {
 

@@ -1,10 +1,9 @@
+// File: gcarray.h
+// Description:
+// stl array wrapper
+
 #ifndef _GC_ARRAY_H
 #define _GC_ARRAY_H
-
-
-// File: array.h
-// Description:
-// define smart pointer classes
 
 #include <utility>
 #include <functional>

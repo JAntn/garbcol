@@ -1,9 +1,9 @@
+// File: gcpointer.h
+// Description:
+// stl set wrapper
+
 #ifndef _GC_SET_H
 #define _GC_SET_H
-
-// File: gcset.h
-// Description:
-// define smart pointer classes
 
 #include <utility>
 #include <functional>

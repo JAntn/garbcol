@@ -1,3 +1,7 @@
+// File: gccontainer.h
+// Description:
+// scontainer interfaces
+
 #ifndef _GC_CONTAINER_H
 #define _GC_CONTAINER_H
 
@@ -77,7 +81,7 @@ namespace collector{
 
     public:
 
-        //    convert an allocator<T> to allocator<U>
+        // convert an allocator<T> to allocator<U>
 
         template<typename U>
         struct rebind {
@@ -105,7 +109,7 @@ namespace collector{
             //nothing
         }
 
-        //    address
+        // address
 
         inline pointer address(reference r) {
             return &r;

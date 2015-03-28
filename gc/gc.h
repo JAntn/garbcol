@@ -1,3 +1,7 @@
+// File: gc.h
+// Description:
+// Smart pointers with garbage collector of mark and sweep type, thread support and stl containers wrapper
+
 #ifndef _GC_COLLECTOR_H
 #define _GC_COLLECTOR_H
 
@@ -8,11 +12,6 @@
 #include <mutex>
 #include <vector>
 #include <type_traits>
-
-// File: collector.h
-// Description:
-// Smart pointers with garbage collector of mark and sweep type and thread support and stl wrapper
-
 
 #define _GC_THREAD_LOCK std::lock_guard<std::mutex> lock(_gc_collector->mutex_instance);
 

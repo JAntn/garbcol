@@ -1,3 +1,7 @@
+// File: gcvector.h
+// Description:
+// stl vector wrapper
+
 #ifndef _GC_VECTOR_H
 #define _GC_VECTOR_H
 

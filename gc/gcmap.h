@@ -1,9 +1,9 @@
+// File: gcdeque.h
+// Description:
+// stl map wrapper
+
 #ifndef _GC_MAP_H
 #define _GC_MAP_H
-
-// File: gcmap.h
-// Description:
-// define smart pointer classes
 
 #include <utility>
 #include <functional>
