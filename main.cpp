@@ -67,7 +67,8 @@ void test_0() {
 
 
 
-// A class that doesn't have any pointer member dont't have any special configuration
+// A class that doesn't have any pointer member 
+// doesnt't need any special configuration
 
 class XBase {
 public:
@@ -109,7 +110,8 @@ void test_1() {
 
 // ----------------------------------------------------------------------
 
-// A class with pointer members must be configured like this template
+// A class with pointer members must be 
+// configured like this template
 
 class X_gc : public gcObject {
 public:
@@ -119,7 +121,7 @@ public:
 
     X_gc(int a) {
 
-		gcConnectObject do_it(this);
+	gcConnectObject do_it(this);
 
         n = a;
         print("X_gc" + to_string(n) + " created");
@@ -127,7 +129,7 @@ public:
 
     ~X_gc() {
 
-		gcDisconnectObject do_it(this);
+	gcDisconnectObject do_it(this);
 
         print("X_gc" + to_string(n) + " deleted");
 	}
@@ -163,7 +165,6 @@ void test_2()
 
 void test_3(){
 
-
     // A list of pointers
     gcListPointer<X_gc> plist = new gcList<X_gc>;
 
@@ -186,7 +187,6 @@ void test_3(){
 }
 
 void test_4(){
-
 
     gcMapPointer<string,X_gc> pmap = new gcMap<string,X_gc>;
 
@@ -268,7 +268,10 @@ void thread_fn() {
 int main()
 {
     /* Init a garbage collected program */
-	gcCollector new_collector;
+    gcCollector new_collector;
+    
+    // Time between each mark-sweep event
+    // new_collector.sleep_time = 300
 
     void (*tst_tbl[])() = {test_0, test_1, test_2, test_3, test_4, test_5};
 
