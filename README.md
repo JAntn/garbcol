@@ -10,6 +10,8 @@ Programming with this library require some basic rules. First, Garbage Collector
 
 #include "gc/gc.h"
 
+using namespace collector;
+
 int main(int argc, char* argv[])
 {
     gcCollector new_collector;
