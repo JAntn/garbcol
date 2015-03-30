@@ -12,11 +12,13 @@ namespace collector {
 	// Base class for pointer objects
 	class gcPointerBase{
 	public:
-		gcObject* object;
 
-		gcPointerBase();
-		gcPointerBase(const gcPointerBase&);
-        virtual ~gcPointerBase();
+        // Pointer contents
+        gcObject*                           object;
+
+                                            gcPointerBase();
+                                            gcPointerBase(const gcPointerBase&);
+        virtual                             ~gcPointerBase();
 	};
 
 	// 'Generic template' pointer class
@@ -28,27 +30,31 @@ namespace collector {
     class gcPointer<_Type, true> : public gcPointerBase{
 	public:
 
-		gcPointer();
-        gcPointer(_Type*const other);
-        gcPointer(const gcPointer<_Type, true>& other);
+                                            gcPointer();
+                                            gcPointer(_Type*const other);
+                                            gcPointer(const gcPointer<_Type, true>& other);
+                                            ~gcPointer() override;
 
-        virtual ~gcPointer();
+        gcPointer<_Type, true>&             operator= (_Type*const other);
+        gcPointer<_Type, true>&             operator= (const gcPointer<_Type, true>& other);
 
-        gcPointer<_Type, true>& operator= (_Type*const other);
-        gcPointer<_Type, true>& operator= (const gcPointer<_Type, true>& other);
+        _Type&                              operator*();
+        const _Type&                        operator*() const;
 
-        _Type& operator*();
-        _Type* operator->();
-        _Type& operator[](int);
+        _Type*                              operator->();
+        const _Type*                        operator->() const;
 
-        template<class _Other> explicit operator gcPointer<_Other>();
+        _Type&                              operator[](int);
+        const _Type&                        operator[](int) const;
 
-        bool operator== (const gcPointer<_Type, true>& other) const;
-        bool operator!= (const gcPointer<_Type, true>& other) const;
-        bool operator< (const gcPointer<_Type, true>& other) const;
-        bool operator> (const gcPointer<_Type, true>& other) const;
-        bool operator<= (const gcPointer<_Type, true>& other) const;
-        bool operator>= (const gcPointer<_Type, true>& other) const;
+        template<class _Other> explicit     operator gcPointer<_Other>();
+
+        bool                                operator== (const gcPointer<_Type, true>& other) const;
+        bool                                operator!= (const gcPointer<_Type, true>& other) const;
+        bool                                operator< (const gcPointer<_Type, true>& other) const;
+        bool                                operator> (const gcPointer<_Type, true>& other) const;
+        bool                                operator<= (const gcPointer<_Type, true>& other) const;
+        bool                                operator>= (const gcPointer<_Type, true>& other) const;
 
     };
 
@@ -92,12 +98,27 @@ namespace collector {
     }
 
     template<class _Type>
+    const _Type& gcPointer<_Type, true>::operator*() const {
+        return *static_cast<_Type*>(object);
+    }
+
+    template<class _Type>
     _Type* gcPointer<_Type, true>::operator->() {
         return static_cast<_Type*>(object);
     }
 
     template<class _Type>
+    const _Type* gcPointer<_Type, true>::operator->() const {
+        return static_cast<_Type*>(object);
+    }
+
+    template<class _Type>
     _Type& gcPointer<_Type, true>::operator[](int i) {
+        return static_cast<_Type*>(object)[i];
+    }
+
+    template<class _Type>
+    const _Type& gcPointer<_Type, true>::operator[](int i) const {
         return static_cast<_Type*>(object)[i];
     }
 
@@ -143,27 +164,30 @@ namespace collector {
     class gcPointer<_Type, false> : public gcPointerBase{
     public:
 
-        gcPointer();
-        gcPointer(_Type*const other);
-        gcPointer(const gcPointer<_Type, false>& other);
+                                            gcPointer();
+                                            gcPointer(_Type*const other);
+                                            gcPointer(const gcPointer<_Type, false>& other);
+                                            ~gcPointer() override;
 
-        virtual ~gcPointer();
+        gcPointer<_Type, false>&            operator= (_Type*const other);
+        gcPointer<_Type, false>&            operator= (const gcPointer<_Type, false>& other);
 
-        gcPointer<_Type, false>& operator= (_Type*const other);
-        gcPointer<_Type, false>& operator= (const gcPointer<_Type, false>& other);
+        _Type&                              operator*();
+        _Type*                              operator->();
+        _Type&                              operator[](int);
 
-        _Type& operator*();
-        _Type* operator->();
-        _Type& operator[](int);
+        const _Type&                        operator*() const;
+        const _Type*                        operator->() const;
+        const _Type&                        operator[](int) const;
 
-        template<class U> explicit operator gcPointer<U>();
+        template<class _Other> explicit     operator gcPointer<_Other>();
 
-        bool operator== (const gcPointer<_Type, false>& other) const;
-        bool operator!= (const gcPointer<_Type, false>& other) const;
-        bool operator< (const gcPointer<_Type, false>& other) const;
-        bool operator> (const gcPointer<_Type, false>& other) const;
-        bool operator<= (const gcPointer<_Type, false>& other) const;
-        bool operator>= (const gcPointer<_Type, false>& other) const;
+        bool                                operator== (const gcPointer<_Type, false>& other) const;
+        bool                                operator!= (const gcPointer<_Type, false>& other) const;
+        bool                                operator< (const gcPointer<_Type, false>& other) const;
+        bool                                operator> (const gcPointer<_Type, false>& other) const;
+        bool                                operator<= (const gcPointer<_Type, false>& other) const;
+        bool                                operator>= (const gcPointer<_Type, false>& other) const;
 
     };
 
@@ -212,6 +236,21 @@ namespace collector {
 
     template<class _Type>
     _Type& gcPointer<_Type, false>::operator[](int i) {
+        return (static_cast<const gcObjectAdapter<_Type>*>(object)->adaptee)[i];
+    }
+
+    template<class _Type>
+    const _Type& gcPointer<_Type, false>::operator*() const {
+        return *(static_cast<const gcObjectAdapter<_Type>*>(object)->adaptee);
+    }
+
+    template<class _Type>
+    const _Type* gcPointer<_Type, false>::operator->() const{
+        return static_cast<const gcObjectAdapter<_Type>*>(object)->adaptee;
+    }
+
+    template<class _Type>
+    const _Type& gcPointer<_Type, false>::operator[](int i) const {
         return (static_cast<const gcObjectAdapter<_Type>*>(object)->adaptee)[i];
     }
 

@@ -13,11 +13,11 @@ namespace collector {
 	class gcObjectScope {
 	public:
 
-		gcObjectScope();
-		~gcObjectScope();
-
         // List of pointers connected to this context.
-        gcContainerInterface* childreen;
+        gcContainerInterface*               childreen;
+
+                                            gcObjectScope();
+                                            ~gcObjectScope();
 	};
 
 	// Base class for classes which have gcPointerBase class members
@@ -25,45 +25,48 @@ namespace collector {
 	public:
 
 		// Used in mark sweep algorithm
-		bool marked[2];
+        bool                                marked[2];
 
 		// Inner scope of this object
-		gcObjectScope object_scope;
+        gcObjectScope                       object_scope;
 
 		// Polymorphic members
-		virtual						~gcObject();
+        virtual                             ~gcObject();
 	};
 
 	// Manages gcObject constructor
 	class gcConnectObject{
 	public:
 
-		gcObject* parent;
+        // Temporal pointer to parent
+        gcObject*                           parent;
 
-		gcConnectObject(gcObject*const);
-		~gcConnectObject();
+                                            gcConnectObject(gcObject*const);
+                                            ~gcConnectObject();
 	};
 
 	// Manages gcObject destroy
 	class gcDisconnectObject{
 	public:
 
-		gcObject* parent;
+        // Temporal pointer to parent
+        gcObject*                           parent;
 
-		gcDisconnectObject(gcObject*const);
-		~gcDisconnectObject();
+                                            gcDisconnectObject(gcObject*const);
+                                            ~gcDisconnectObject();
 
 	};
 
 	// Adapter to use non-gcObject derived classes with pointers
-	template<class T>
+    template<class _Type>
 	class gcObjectAdapter : public gcObject{
 	public:
 
-		T* adaptee;
+        // Adaptee object
+        _Type*                              adaptee;
 
-		gcObjectAdapter(T*const);
-        virtual	~gcObjectAdapter();
+                                            gcObjectAdapter(_Type*const);
+                                            ~gcObjectAdapter() override;
 	};
 
 
@@ -71,14 +74,14 @@ namespace collector {
 
 	// methods
 
-	template<class T>
-	gcObjectAdapter<T>::gcObjectAdapter(T*const other) {
+    template<class _Type>
+    gcObjectAdapter<_Type>::gcObjectAdapter(_Type*const other) {
 		gcConnectObject new_object(this);
 		adaptee = other;
 	}
 
-	template<class T>
-	gcObjectAdapter<T>::~gcObjectAdapter() {
+    template<class _Type>
+    gcObjectAdapter<_Type>::~gcObjectAdapter() {
 		gcDisconnectObject delete_object(this);
 		delete adaptee;
 	}

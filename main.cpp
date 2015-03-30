@@ -270,8 +270,8 @@ int main()
     /* Init a garbage collected program */
     gcCollector new_collector;
     
-    // Time between each mark-sweep event
-    // new_collector.sleep_time = 300
+    // Time between each mark-sweep event = 300
+    // new_collector.sleep_time = 300 (better, lock it before)
 
     void (*tst_tbl[])() = {test_0, test_1, test_2, test_3, test_4, test_5};
 
@@ -289,7 +289,13 @@ int main()
     }
 
     cout << "multy thread test\n";
+    cout << "A lot of mess will be shown\n";
     cout << "--------------------------------------" << "\n";
+
+    char c = '\0';
+    while (c!='\n'){
+        c = getchar();
+    }
 
 	thread new_thread[THREAD_MAX];
 
@@ -300,6 +306,9 @@ int main()
     for (int n = 0; n < THREAD_MAX; n++){
         new_thread[n].join();
     }
+
+    cout << "multy thread test succesfull\n";
+    cout << "--------------------------------------" << "\n";
 
     return 0;
 }

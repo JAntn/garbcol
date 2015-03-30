@@ -33,6 +33,8 @@ namespace collector {
 		_gc_scope_info->current_scope = _gc_scope_info->current_scope_stack.back();
 		_gc_scope_info->current_scope_stack.pop_back();
 
+        // Prevent object to be released before connection:
+        //  '_gc_collector->marked_condition' might change in collector thread
 		_GC_THREAD_LOCK
 
 		// Configure object and push it at heap
@@ -44,6 +46,7 @@ namespace collector {
 
 	// [4]
 	// Called inside object's destructor
+    // Actually, only prevents that destructor were at correct context
 	gcDisconnectObject::gcDisconnectObject(gcObject*const object){
 
 		parent = object;

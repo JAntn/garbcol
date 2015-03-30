@@ -50,6 +50,7 @@ namespace collector{
 
 	void gcScopeContainer::gc_push_back(gcPointerBase*const val) {
 
+        // Prevent collector while adding elements
 		_GC_THREAD_LOCK
 
 		adaptee.push_back(val);
@@ -57,6 +58,7 @@ namespace collector{
 
 	void gcScopeContainer::gc_pop_back() {
 
+        // Prevent collector while removing elements
 		_GC_THREAD_LOCK
 
 		adaptee.pop_back();

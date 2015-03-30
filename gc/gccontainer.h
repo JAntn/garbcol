@@ -31,7 +31,7 @@ namespace collector{
 
     class gcDequeContainerInterface: public gcContainerInterface{
     public:
-        virtual								~gcDequeContainerInterface() = 0;
+                                            ~gcDequeContainerInterface() override = 0;
         virtual void						gc_push_back(gcPointerBase*const val) = 0;
         virtual void						gc_pop_back() = 0;
     };
@@ -44,10 +44,10 @@ namespace collector{
 
         Iterator adaptee;
 
-		virtual								~gcScopeIterator();
-        virtual gcIteratorInterface*		gc_next();
-        virtual const gcPointerBase*        gc_get_pointer() const;
-        virtual bool						gc_is_equal(gcIteratorInterface*const other) const;
+                                            ~gcScopeIterator() override;
+        gcIteratorInterface*                gc_next() override;
+        const gcPointerBase*                gc_get_pointer() const override;
+        bool                                gc_is_equal(gcIteratorInterface*const other) const override;
                                             gcScopeIterator(const Iterator&);
 
 	};
@@ -67,11 +67,11 @@ namespace collector{
 	};
 
     // Allocator for pointer stl containers
-    template<typename T>
+    template<typename _Type>
     class gcContainerAllocator {
     public:
 
-        typedef T value_type;
+        typedef _Type value_type;
         typedef value_type* pointer;
         typedef const value_type* const_pointer;
         typedef value_type& reference;
@@ -81,11 +81,11 @@ namespace collector{
 
     public:
 
-        // convert an allocator<T> to allocator<U>
+        // convert an allocator<_Type> to allocator<_Other>
 
-        template<typename U>
+        template<typename _Other>
         struct rebind {
-            typedef gcContainerAllocator<U> other;
+            typedef gcContainerAllocator<_Other> other;
         };
 
     public:
@@ -104,18 +104,18 @@ namespace collector{
             //nothing
         }
 
-        template<typename U>
-        inline explicit gcContainerAllocator(gcContainerAllocator<U> const&) {
+        template<typename _Other>
+        inline explicit gcContainerAllocator(gcContainerAllocator<_Other> const&) {
             //nothing
         }
 
         // address
 
-        inline pointer address(reference r) {
+        inline pointer address(reference r) const{
             return &r;
         }
 
-        inline const_pointer address(const_reference r) {
+        inline const_pointer address(const_reference r) const{
             return &r;
         }
 
@@ -123,7 +123,7 @@ namespace collector{
 
         inline pointer allocate(size_type cnt,
             typename std::allocator<void>::const_pointer hint = 0) {
-            return reinterpret_cast<pointer>(::operator new(cnt * sizeof(T)));
+            return reinterpret_cast<pointer>(::operator new(cnt * sizeof(value_type)));
         }
 
         inline void deallocate(pointer p, size_type) {
@@ -132,31 +132,31 @@ namespace collector{
 
         // size
         inline size_type max_size() const {
-            return std::numeric_limits<size_type>::max() / sizeof(T);
+            return std::numeric_limits<size_type>::max() / sizeof(value_type);
         }
 
         // construction/destruction
-        template< class Node_, class ...Args_ >
-        void construct( Node_* p, Args_&&...args){
+        template< class _Node, class ..._Args >
+        void construct( _Node* p, _Args&&...args){
 
             // push state
             bool tmp = _gc_scope_info->from_allocator;
 
             _gc_scope_info->from_allocator = true;
-            ::new((void *)p) Node_(std::forward<Args_>(args)...);
+            ::new((void *)p) _Node(std::forward<_Args>(args)...);
 
             // restore state
             _gc_scope_info->from_allocator = tmp;
         }
 
-        template<class Node_>
-        inline void destroy(Node_* p) {
+        template<class _Node>
+        inline void destroy(_Node* p) {
 
             // push state
             bool tmp = _gc_scope_info->from_allocator;
 
             _gc_scope_info->from_allocator = true;
-            p->~Node_();
+            p->~_Node();
 
             // restore state
             _gc_scope_info->from_allocator = tmp;
@@ -167,7 +167,7 @@ namespace collector{
         }
 
         inline bool operator!=(gcContainerAllocator const& a) {
-            return !operator==(a);
+            return false;
         }
     };
 }

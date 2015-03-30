@@ -28,69 +28,73 @@ namespace collector {
 	public:
 
         // Position in global instance table
-		std::list<gcScopeInfo*>::iterator position;
+        std::list<gcScopeInfo*>::iterator   position;
 
         // A stack of scopes
-		std::list<gcContainerInterface*> current_scope_stack;
+        std::list<gcContainerInterface*>    current_scope_stack;
 
-		gcContainerInterface* root_scope;
-		gcContainerInterface* current_scope;
-        bool from_allocator;
+        gcContainerInterface*               root_scope;
+        gcContainerInterface*               current_scope;
+        bool                                from_allocator;
 	};
 
     // Configure a thread
 	class gcConnectThread {
 	public:
 		
-		gcScopeInfo* scope_info;
+        gcScopeInfo*                        scope_info;
 
-		gcConnectThread();
-		~gcConnectThread();
+                                            gcConnectThread();
+                                            ~gcConnectThread();
 	};
 
 	// Garbage Collector main object
 	class gcCollector {
 	public:
 
-		static void clean_loop();
-
         // All objects are referenced in a heap
-		std::list<gcObject*> heap;
+        std::list<gcObject*>                heap;
 
         // Scope information table
-		std::list<gcScopeInfo*> scope_info_list;
+        std::list<gcScopeInfo*>             scope_info_list;
 
         // This condition is checked in mark algorithm
-		bool marked_condition;
+        bool                                marked_condition;
 
         // For terminate GC
-		bool exit_flag;
+        bool                                exit_flag;
 
         // GC has its own instance
-		std::thread thread_instance;
+        std::thread                         thread_instance;
 
         // Process mutex tool
-		std::mutex mutex_instance;
+        std::mutex                          mutex_instance;
 
-        // Time between each mark-sweep event
-		int sleep_time;
-
-		gcCollector();
-		~gcCollector();
-
-		void free_heap();
-		void mark();
-		void sweep();
- 
         // At GC cleaning of a thread, it stores info for correct removing
-		std::list<gcScopeInfo*> scope_info_remove_stack;
-		
-		// collector autoconnects to main thread
-		gcConnectThread* connect_thread;
+        std::list<gcScopeInfo*>             scope_info_remove_stack;
+
+        // collector autoconnects to main thread
+        gcConnectThread*                    connect_thread;
+
+        // Minimum time between each mark-sweep event
+        int                                 sleep_time;
+
+                                            gcCollector();
+                                            gcCollector(int);
+                                            ~gcCollector();
+
+        void                                free_heap();
+        void                                mark();
+        void                                sweep();
+
+        static void                         collect();
+
 	};
 
-	extern gcCollector* _gc_collector;
-    extern thread_local gcScopeInfo* _gc_scope_info;
+    // Global objects
+
+    extern gcCollector*                     _gc_collector;
+    extern thread_local gcScopeInfo*        _gc_scope_info;
 }
 
 #include "gcobject.h"

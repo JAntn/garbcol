@@ -21,10 +21,10 @@ namespace collector
 
         _Iterator adaptee;
 
-        virtual gcIteratorInterface*		gc_next();
-        virtual const gcPointerBase*        gc_get_pointer() const;
-        virtual bool						gc_is_equal(gcIteratorInterface*const other) const;
-        virtual								~gcMapIteratorAdapter();
+        gcIteratorInterface*                gc_next() override;
+        const gcPointerBase*                gc_get_pointer() const override;
+        bool                                gc_is_equal(gcIteratorInterface*const other) const override;
+                                            ~gcMapIteratorAdapter() override;
                                             gcMapIteratorAdapter(const _Iterator&);
     };
 
@@ -70,26 +70,25 @@ namespace collector
     public:
 
         // !!Just most basic implementation of derived types yet
-
         typedef _GC_CONTAINER Container;
         typedef _GC_ITERATOR Iterator;
 
-        _GC_CONTAINER adaptee;
+        _GC_CONTAINER                       adaptee;
 
-        gcMap();
-        virtual ~gcMap();
+                                            gcMap();
+                                            ~gcMap() override;
+        gcIteratorInterface*                gc_begin() override;
+        gcIteratorInterface*                gc_end() override;
 
-        virtual gcIteratorInterface*		gc_begin();
-        virtual gcIteratorInterface*		gc_end();
+        gcPointer<_Type>&                   operator[](const _Key &);
+        const gcPointer<_Type>&             operator[](const _Key &) const;
 
-        gcPointer<_Type>&              operator[](const _Key &);
-
-        bool				operator== (const _GC_SELF& other) const;
-        bool				operator!= (const _GC_SELF& other) const;
-        bool				operator> (const _GC_SELF& other) const;
-        bool				operator< (const _GC_SELF& other) const;
-        bool				operator>= (const _GC_SELF& other) const;
-        bool				operator<= (const _GC_SELF& other) const;
+        bool                                operator== (const _GC_SELF& other) const;
+        bool                            	operator!= (const _GC_SELF& other) const;
+        bool                        		operator> (const _GC_SELF& other) const;
+        bool                        		operator< (const _GC_SELF& other) const;
+        bool                        		operator>= (const _GC_SELF& other) const;
+        bool                        		operator<= (const _GC_SELF& other) const;
     };
 
 #ifndef _GC_HIDE_METHODS
@@ -119,6 +118,10 @@ namespace collector
     }
 
     _GC_TEMPLATE gcPointer<_Type>& _GC_SELF::operator[](const _Key& k) {
+        return adaptee[k];
+    }
+
+    _GC_TEMPLATE const gcPointer<_Type>& _GC_SELF::operator[](const _Key& k) const {
         return adaptee[k];
     }
 
@@ -162,28 +165,35 @@ namespace collector
             : public gcPointerBase{
     public:
 
+        // !!Just most basic implementation of derived types yet
         typedef _GC_CONTAINER Container;
         typedef typename _GC_CONTAINER::iterator Iterator;
 
-        gcPointer();
-        gcPointer(_GC_CONTAINER_ADAPTER*const other);
-        gcPointer(const _GC_SELF& other);
-        ~gcPointer();
+                                            gcPointer();
+                                            gcPointer(_GC_CONTAINER_ADAPTER*const other);
+                                            gcPointer(const _GC_SELF& other);
+                                            ~gcPointer() override;
 
-        _GC_SELF&			operator= (_GC_CONTAINER_ADAPTER*const other);
-        _GC_SELF&			operator= (const _GC_SELF& other);
-        _GC_CONTAINER&		operator*();
-        _GC_CONTAINER*		operator->();
-        template<class _Other> explicit operator gcPointer<_Other>();
+        _GC_SELF&                           operator= (_GC_CONTAINER_ADAPTER*const other);
+        _GC_SELF&                           operator= (const _GC_SELF& other);
 
-        gcPointer<_Type>&              operator[] (const _Key&);
+        _GC_CONTAINER&                      operator*();
+        const _GC_CONTAINER&                operator*() const;
 
-        bool				operator== (const _GC_SELF& other) const;
-        bool				operator!= (const _GC_SELF& other) const;
-        bool				operator> (const _GC_SELF& other) const;
-        bool				operator< (const _GC_SELF& other) const;
-        bool				operator<= (const _GC_SELF& other) const;
-        bool				operator>= (const _GC_SELF& other) const;
+        _GC_CONTAINER*                      operator->();
+        const _GC_CONTAINER*                operator->() const;
+
+        template<class _Other> explicit     operator gcPointer<_Other>();
+
+        gcPointer<_Type>&                   operator[] (const _Key&);
+        const gcPointer<_Type>&             operator[] (const _Key&) const;
+
+        bool                                operator== (const _GC_SELF& other) const;
+        bool                        		operator!= (const _GC_SELF& other) const;
+        bool                        		operator> (const _GC_SELF& other) const;
+        bool                        		operator< (const _GC_SELF& other) const;
+        bool                           		operator<= (const _GC_SELF& other) const;
+        bool                        		operator>= (const _GC_SELF& other) const;
     };
 
 #ifndef _GC_HIDE_METHODS
@@ -218,7 +228,15 @@ namespace collector
         return static_cast<_GC_CONTAINER_ADAPTER*>(object)->adaptee;
     }
 
+    _GC_TEMPLATE const _GC_CONTAINER& _GC_SELF::operator*() const{
+        return static_cast<_GC_CONTAINER_ADAPTER*>(object)->adaptee;
+    }
+
     _GC_TEMPLATE _GC_CONTAINER* _GC_SELF::operator->() {
+        return &(static_cast<_GC_CONTAINER_ADAPTER*>(object)->adaptee);
+    }
+
+    _GC_TEMPLATE const _GC_CONTAINER* _GC_SELF::operator->() const{
         return &(static_cast<_GC_CONTAINER_ADAPTER*>(object)->adaptee);
     }
 
@@ -228,6 +246,10 @@ namespace collector
     }
 
     _GC_TEMPLATE gcPointer<_Type>& _GC_SELF::operator[](const _Key& k) {
+        return static_cast<_GC_CONTAINER_ADAPTER*>(object)->adaptee[k];
+    }
+
+    _GC_TEMPLATE const gcPointer<_Type>& _GC_SELF::operator[](const _Key& k) const {
         return static_cast<_GC_CONTAINER_ADAPTER*>(object)->adaptee[k];
     }
 

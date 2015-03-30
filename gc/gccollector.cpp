@@ -8,9 +8,11 @@ namespace collector {
 	gcConnectThread::gcConnectThread() {
 
 		scope_info = new gcScopeInfo;
-		_gc_scope_info = scope_info;
 
+        // Prevent that other threads to change collector attributes
 		_GC_THREAD_LOCK
+
+        _gc_scope_info = scope_info;
 
 		_gc_collector->scope_info_list.push_back(_gc_scope_info);
 		_gc_scope_info->position = --(_gc_collector->scope_info_list.end());
@@ -20,13 +22,16 @@ namespace collector {
 	}
 
 	gcConnectThread::~gcConnectThread(){
-		
+
+        // Prevent that other threads to change collector attributes
 		_GC_THREAD_LOCK
 
 		_gc_collector->scope_info_remove_stack.push_back(scope_info);
 	}
 
 	void gcCollector::free_heap() {
+
+        // Free program memory
 		for (auto position = heap.begin(); position != heap.end(); ++position)
 			delete *position;
 	}
@@ -108,11 +113,15 @@ namespace collector {
 			delete end_position;
 		}
 
+        // Mark is done.
+        // Change mark state. Prevent from wrong object initialization
+        // Clean thread-to-remove stack. Prevent adding new threads.
 		_GC_THREAD_LOCK
 
+        // Change mark state.
 		marked_condition = !marked_condition;
 
-        // clean thread algorithm
+        // Clean thread-to-remove stack
 		for (auto scope_info : scope_info_remove_stack)
 		{
 			scope_info_list.erase(scope_info->position);
@@ -123,6 +132,8 @@ namespace collector {
 	}
 
 	void gcCollector::sweep() {
+
+        // All marked to remove are free of being used. Not thread lock required
 
 		for (auto position = heap.begin(); position != heap.end();)
 		{
@@ -148,7 +159,9 @@ namespace collector {
 		}
 	}
 
-	void gcCollector::clean_loop() {
+    void gcCollector::collect() {
+
+        // Simple and effective
 
 		gcConnectThread _gc_val;
 
@@ -167,18 +180,21 @@ namespace collector {
 			end_time = start_time + step_time;
 		}
 	}
+    gcCollector::gcCollector() : gcCollector(300) {
+        // 300 ms is default collector cleaning step
+    }
 
-	gcCollector::gcCollector() {
+    gcCollector::gcCollector(int sleep_time) {
 
 		_gc_collector = this;
 		_gc_collector->marked_condition = true;
 		_gc_collector->exit_flag = false;
-		_gc_collector->sleep_time = 300;    // default time step for each cleaning operation
+        _gc_collector->sleep_time = sleep_time;    // default time step for each cleaning operation
 
         // default thread connection object
 		connect_thread = new gcConnectThread;
 
-		_gc_collector->thread_instance = std::thread(&gcCollector::clean_loop);
+        _gc_collector->thread_instance = std::thread(&gcCollector::collect);
 	}
 
 	gcCollector::~gcCollector() {		
