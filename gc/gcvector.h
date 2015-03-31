@@ -7,7 +7,7 @@
 
 #include "gcsequence.h"
 
-namespace collector {
+namespace gcNamespace {
 
 template<class T> using gcVector = gcSequenceAdapter < std::vector, T >;
 template<class T> using gcVectorPointer = gcPointer < gcVector< T >, true >;

@@ -7,16 +7,25 @@
 
 #include "gc.h"
 
-namespace collector {
+namespace gcNamespace {
 
 	// Base class for pointer objects
 	class gcPointerBase{
-	public:
+    public:
 
-        // Pointer contents
         gcObject*                           object;
 
+        // Pointer contents
+
+        void                                gc_copy(const gcPointerBase&);
+        void                                gc_set_object(gcObject*const);
+        void                                gc_delete_object();
+
+        void                                gc_make_persistent();
+        void                                gc_make_collectable();
+
                                             gcPointerBase();
+                                            gcPointerBase(gcObject*const);
                                             gcPointerBase(const gcPointerBase&);
         virtual                             ~gcPointerBase();
 	};
@@ -67,12 +76,12 @@ namespace collector {
 
     template<class _Type>
     gcPointer<_Type, true>::gcPointer(_Type*const other) : gcPointerBase() {
-		object = other;
-	}
+        gc_set_object(other);
+    }
 
     template<class _Type>
     gcPointer<_Type, true>::gcPointer(const gcPointer<_Type, true>& other) : gcPointerBase() {
-		object = other.object;
+        gc_copy(other);
 	}
 
     template<class _Type>
@@ -82,13 +91,13 @@ namespace collector {
 
     template<class _Type>
     gcPointer<_Type, true>& gcPointer<_Type, true>::operator = (_Type*const other) {
-		object = other;
-		return *this;
+        gc_set_object(other);
+        return *this;
 	}
 
     template<class _Type>
     gcPointer<_Type, true>& gcPointer<_Type, true>::operator = (const gcPointer<_Type, true>& other) {
-        object = other.object;
+        gc_copy(other);
         return *this;
     }
 
@@ -199,12 +208,12 @@ namespace collector {
 
     template<class _Type>
     gcPointer<_Type, false>::gcPointer(_Type*const other) : gcPointerBase() {
-        object = new gcObjectAdapter<_Type>(other);
+        gc_set_object(new gcObjectAdapter<_Type>(other));
 	}
 
     template<class _Type>
     gcPointer<_Type, false>::gcPointer(const gcPointer<_Type, false>& other) : gcPointerBase() {
-		object = other.object;
+        gc_copy(other);
 	}
 
     template<class _Type>
@@ -214,13 +223,13 @@ namespace collector {
 
     template<class _Type>
     gcPointer<_Type, false>& gcPointer<_Type, false>::operator = (_Type*const other) {
-        object = new gcObjectAdapter<_Type>(other);
+        gc_set_object(new gcObjectAdapter<_Type>(other));
 		return *this;
 	}
 
     template<class _Type>
     gcPointer<_Type, false>& gcPointer<_Type, false>::operator = (const gcPointer<_Type, false>& other) {
-		object = other.object;
+        gc_copy(other);
 		return *this;
 	}
 

@@ -1,7 +1,7 @@
 #define _GC_HIDE_METHODS
 #include "gccontainer.h"
 
-namespace collector{
+namespace gcNamespace{
 	
 	gcIteratorInterface::~gcIteratorInterface(){
 		//nothing
@@ -28,7 +28,7 @@ namespace collector{
 		return this;
 	}
 
-    const gcPointerBase* gcScopeIterator::gc_get_pointer() const{
+    const gcPointerBase* gcScopeIterator::gc_get_const_pointer() const {
         return *adaptee;
     }
 
@@ -40,11 +40,11 @@ namespace collector{
 		//nothing
 	}
 
-    gcIteratorInterface* gcScopeContainer::gc_begin(){
+    gcIteratorInterface* gcScopeContainer::gc_begin() {
         return new gcScopeIterator(adaptee.begin());
 	}
 
-    gcIteratorInterface* gcScopeContainer::gc_end(){
+    gcIteratorInterface* gcScopeContainer::gc_end() {
         return new gcScopeIterator(adaptee.end());
 	}
 

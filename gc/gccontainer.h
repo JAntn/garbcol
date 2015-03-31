@@ -7,15 +7,15 @@
 
 #include "gcpointer.h"
 
-namespace collector{
-	
+namespace gcNamespace{
+
 	// iterator interface class
 	class gcIteratorInterface{
 	public:
 
 		virtual								~gcIteratorInterface() = 0;
+        virtual const gcPointerBase*        gc_get_const_pointer() const = 0;
 		virtual gcIteratorInterface*		gc_next() = 0;
-        virtual const gcPointerBase*        gc_get_pointer() const = 0;
         virtual bool						gc_is_equal(gcIteratorInterface*const other) const = 0;
 	};
 
@@ -24,46 +24,53 @@ namespace collector{
 	public:
 
 		virtual								~gcContainerInterface() = 0;
-        virtual gcIteratorInterface*		gc_begin() = 0;
-        virtual gcIteratorInterface*		gc_end() = 0;
 
+        virtual gcIteratorInterface*        gc_begin() = 0;
+        virtual gcIteratorInterface*        gc_end() = 0;
 	};
 
     class gcDequeContainerInterface: public gcContainerInterface{
     public:
                                             ~gcDequeContainerInterface() override = 0;
+
         virtual void						gc_push_back(gcPointerBase*const val) = 0;
         virtual void						gc_pop_back() = 0;
     };
 
-	// iterator base class
-	class gcScopeIterator : public gcIteratorInterface{
-	public:
+
+    // iterator base class
+    class gcScopeIterator : public gcIteratorInterface{
+    public:
 
         typedef typename std::list<gcPointerBase*>::iterator Iterator;
 
-        Iterator adaptee;
+        Iterator                            adaptee;
 
                                             ~gcScopeIterator() override;
+
         gcIteratorInterface*                gc_next() override;
-        const gcPointerBase*                gc_get_pointer() const override;
+        const gcPointerBase*                gc_get_const_pointer() const override;
+
         bool                                gc_is_equal(gcIteratorInterface*const other) const override;
+
                                             gcScopeIterator(const Iterator&);
 
-	};
+    };
 
 	// container base class
 	// It should have a complete set of methods of list 
     class gcScopeContainer : public gcDequeContainerInterface{
 	public:
 
-		std::list<gcPointerBase*> adaptee;
+        std::list<gcPointerBase*>           adaptee;
 
-		virtual								~gcScopeContainer();
-        virtual gcIteratorInterface*		gc_begin();
-        virtual gcIteratorInterface*		gc_end();
-		virtual void						gc_push_back(gcPointerBase*const val);
-		virtual void						gc_pop_back();
+                                            ~gcScopeContainer() override;
+
+        gcIteratorInterface*                gc_begin() override;
+        gcIteratorInterface*                gc_end() override;
+
+        void                                gc_push_back(gcPointerBase*const val) override;
+        void                                gc_pop_back() override;
 	};
 
     // Allocator for pointer stl containers

@@ -10,7 +10,7 @@
 
 #include "gccontainer.h"
 
-namespace collector {
+namespace gcNamespace {
 
 
 	// GC internal pointer iterator adapter
@@ -22,11 +22,27 @@ namespace collector {
         _Iterator                           adaptee;
 
         gcIteratorInterface*                gc_next() override;
-        const gcPointerBase*                gc_get_pointer() const override;
+        const gcPointerBase*                gc_get_const_pointer() const override;
         bool                                gc_is_equal(gcIteratorInterface*const other) const override;
+
                                             ~gcSequenceIteratorAdapter() override;
                                             gcSequenceIteratorAdapter(const _Iterator&);
 	};
+
+    // GC internal pointer iterator adapter
+
+    template<class _ConstIterator>
+    class gcSequenceConstIteratorAdapter : public gcIteratorInterface {
+    public:
+
+        _ConstIterator                      adaptee;
+
+        gcIteratorInterface*                gc_next() override;
+        bool                                gc_is_equal(gcIteratorInterface*const other) const override;
+
+                                            ~gcSequenceConstIteratorAdapter() override;
+                                            gcSequenceConstIteratorAdapter(const _ConstIterator&);
+    };
 
 #ifndef _GC_HIDE_METHODS
 	
@@ -47,12 +63,12 @@ namespace collector {
 	}
 
     template<class _Iterator>
-    const gcPointerBase* gcSequenceIteratorAdapter<_Iterator>::gc_get_pointer() const {
+    const gcPointerBase* gcSequenceIteratorAdapter<_Iterator>::gc_get_const_pointer() const {
         return &(*adaptee);
     }
 
 	template<class _Iterator>
-    bool gcSequenceIteratorAdapter<_Iterator>::gc_is_equal(gcIteratorInterface*const other)  const{
+    bool gcSequenceIteratorAdapter<_Iterator>::gc_is_equal(gcIteratorInterface*const other) const {
         return ((static_cast<gcSequenceIteratorAdapter<_Iterator>*>(other)->adaptee) == adaptee);
 	}
 
@@ -93,24 +109,24 @@ namespace collector {
 
 #ifndef _GC_HIDE_METHODS
 
-    _GC_TEMPLATE gcIteratorInterface* _GC_SELF::gc_begin(){
+    _GC_TEMPLATE gcIteratorInterface* _GC_SELF::gc_begin() {
         return new gcSequenceIteratorAdapter<_GC_ITERATOR>(adaptee.begin());
     }
 
-    _GC_TEMPLATE gcIteratorInterface* _GC_SELF::gc_end(){
+    _GC_TEMPLATE gcIteratorInterface* _GC_SELF::gc_end() {
         return new gcSequenceIteratorAdapter<_GC_ITERATOR>(adaptee.end());
 	}
 
     _GC_TEMPLATE _GC_SELF::~gcSequenceAdapter() {
 
-		gcDisconnectObject _gc_val(this);
+        gcDisconnectObject do_it(this);
 
 		object_scope.childreen = 0;
 	}
 
     _GC_TEMPLATE _GC_SELF::gcSequenceAdapter() : gcObject() {
 
-		gcConnectObject _gc_val(this);
+        gcConnectObject do_it(this);
 
 		delete object_scope.childreen;
 		object_scope.childreen = this;
@@ -202,11 +218,11 @@ namespace collector {
 	_GC_TEMPLATE _GC_SELF::gcPointer() : gcPointerBase() {}
 
     _GC_TEMPLATE _GC_SELF::gcPointer(_GC_CONTAINER_ADAPTER*const other) : gcPointerBase() {
-		object = other;
+        gc_set_object(other);
 	}
 
 	_GC_TEMPLATE _GC_SELF::gcPointer(const _GC_SELF& other) : gcPointerBase() {
-		object = other.object;
+        gc_copy(other);
 	}
 
 	_GC_TEMPLATE _GC_SELF::~gcPointer() { 
@@ -214,12 +230,12 @@ namespace collector {
     }
 
     _GC_TEMPLATE _GC_SELF& _GC_SELF::operator = (_GC_CONTAINER_ADAPTER*const other) {
-		object = other;
+        gc_set_object(other);
 		return *this;
 	}
 
 	_GC_TEMPLATE _GC_SELF& _GC_SELF::operator = (const _GC_SELF& other) {
-		object = other.object;
+        gc_copy(other);
 		return *this;
 	}
 

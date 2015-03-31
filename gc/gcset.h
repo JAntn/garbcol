@@ -11,7 +11,7 @@
 
 #include "gccontainer.h"
 
-namespace collector
+namespace gcNamespace
 {
 
     // GC internal set pointer iterator adapter
@@ -23,7 +23,7 @@ namespace collector
         _Iterator                           adaptee;
 
         gcIteratorInterface*                gc_next() override;
-        const gcPointerBase*                gc_get_pointer() const override;
+        const gcPointerBase*                gc_get_const_pointer() const override;
         bool                                gc_is_equal(gcIteratorInterface*const other) const override;
 
                                             ~gcSetIteratorAdapter() override;
@@ -48,8 +48,9 @@ namespace collector
         return this;
     }
 
+
     template<class _Iterator>
-    const gcPointerBase* gcSetIteratorAdapter<_Iterator>::gc_get_pointer() const {
+    const gcPointerBase* gcSetIteratorAdapter<_Iterator>::gc_get_const_pointer() const {
         return &(*adaptee);
     }
 
@@ -93,13 +94,12 @@ namespace collector
 
 #ifndef _GC_HIDE_METHODS
 
-    _GC_TEMPLATE gcIteratorInterface* _GC_SELF::gc_begin(){
+    _GC_TEMPLATE gcIteratorInterface* _GC_SELF::gc_begin() {
         return new gcSetIteratorAdapter<_GC_ITERATOR>(adaptee.begin());
     }
 
-    _GC_TEMPLATE gcIteratorInterface* _GC_SELF::gc_end(){
+    _GC_TEMPLATE gcIteratorInterface* _GC_SELF::gc_end() {
         return new gcSetIteratorAdapter<_GC_ITERATOR>(adaptee.end());
-
     }
 
     _GC_TEMPLATE _GC_SELF::~gcSet() {
@@ -191,7 +191,7 @@ namespace collector
     _GC_TEMPLATE _GC_SELF::gcPointer() : gcPointerBase() {}
 
     _GC_TEMPLATE _GC_SELF::gcPointer(_GC_CONTAINER_ADAPTER*const other) : gcPointerBase() {
-        object = other;
+        gc_set_object(other);
     }
 
     _GC_TEMPLATE _GC_SELF::gcPointer(const _GC_SELF& other) : gcPointerBase() {
@@ -203,7 +203,7 @@ namespace collector
     }
 
     _GC_TEMPLATE _GC_SELF& _GC_SELF::operator = (_GC_CONTAINER_ADAPTER*const other) {
-        object = other;
+        gc_set_object(other);
         return *this;
     }
 

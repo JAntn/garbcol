@@ -7,7 +7,7 @@
 
 #include "gcsequence.h"
 
-namespace collector {
+namespace gcNamespace {
 
 template<class T> using gcDeque = gcSequenceAdapter < std::deque, T > ;
 template<class T> using gcDequePointer = gcPointer < gcDeque< T >, true > ;

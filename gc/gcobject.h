@@ -7,7 +7,7 @@
 
 #include "gc.h"
 
-namespace collector {
+namespace gcNamespace {
 
 	// Has a list of connections to gcPointerBase elements 
 	class gcObjectScope {
@@ -25,7 +25,7 @@ namespace collector {
 	public:
 
 		// Used in mark sweep algorithm
-        bool                                marked[2];
+        unsigned char                       mark;
 
 		// Inner scope of this object
         gcObjectScope                       object_scope;

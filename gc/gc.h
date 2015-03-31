@@ -6,16 +6,20 @@
 #define _GC_COLLECTOR_H
 
 #include <chrono>
-#include <stack>
 #include <list>
 #include <thread>
 #include <mutex>
-#include <vector>
 #include <type_traits>
 
 #define _GC_THREAD_LOCK std::lock_guard<std::mutex> lock(_gc_collector->mutex_instance);
 
-namespace collector {
+namespace gcNamespace {
+
+    const unsigned char _gc_rvalue_bit       = 0x01; // not garbage collected yet
+    const unsigned char _gc_mark_bit         = 0x02; // gc marks as connected here
+    const unsigned char _gc_remove_bit       = 0x04; // it was detected as not connected in sweep but will wait to next sweep to remove (just in case)
+    const unsigned char _gc_persistent_bit   = 0x08; // not to delete by garbage mark.sweep algorithm
+    const unsigned char _gc_force_remove_bit = 0x10; // force to delete
 
 	class gcContainerInterface;
     class gcDequeContainerInterface;
@@ -58,10 +62,8 @@ namespace collector {
         // Scope information table
         std::list<gcScopeInfo*>             scope_info_list;
 
-        // This condition is checked in mark algorithm
-        bool                                marked_condition;
-
-        // For terminate GC
+        // This condition is checked in mark algorithm. Changes at each mrk-swp pass
+        unsigned char                       mark_bit;  // For terminate GC
         bool                                exit_flag;
 
         // GC has its own instance
@@ -71,7 +73,7 @@ namespace collector {
         std::mutex                          mutex_instance;
 
         // At GC cleaning of a thread, it stores info for correct removing
-        std::list<gcScopeInfo*>             scope_info_remove_stack;
+        std::list<gcScopeInfo*>             remove_scope_info_stack;
 
         // collector autoconnects to main thread
         gcConnectThread*                    connect_thread;

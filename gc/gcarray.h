@@ -11,7 +11,7 @@
 
 #include "gccontainer.h"
 
-namespace collector {
+namespace gcNamespace {
 
 
     // GC internal pointer iterator adapter
@@ -22,9 +22,11 @@ namespace collector {
 
         _Iterator                           adaptee;
 
+
         gcIteratorInterface*                gc_next() override;
-        const gcPointerBase*                gc_get_pointer() const override;
+        const gcPointerBase*                gc_get_const_pointer() const override;
         bool                                gc_is_equal(gcIteratorInterface*const other) const override;
+
                                             ~gcArrayIteratorAdapter() override;
                                             gcArrayIteratorAdapter(const _Iterator&) override;
     };
@@ -48,7 +50,7 @@ namespace collector {
     }
 
     template<class _Iterator>
-    const gcPointerBase* gcArrayIteratorAdapter<_Iterator>::gc_get_pointer() const {
+    const gcPointerBase*  gcArrayIteratorAdapter<_Iterator>::gc_get_const_pointer() const {
         return &(*adaptee);
     }
 
@@ -63,6 +65,7 @@ namespace collector {
 #define _GC_TEMPLATE	template < class _Type, std::size_t _N>
 #define _GC_CONTAINER	std::array<gcPointer<_Type>, _N>
 #define _GC_ITERATOR	typename _GC_CONTAINER::iterator
+#define _GC_CONST_ITERATOR	typename _GC_CONTAINER::const_iterator
 #define _GC_SELF		gcArray<_Type, _N>
 
     _GC_TEMPLATE
@@ -77,6 +80,7 @@ namespace collector {
 
                                             gcArray();
                                             ~gcArray() override;
+
         gcIteratorInterface*                gc_begin() override;
         gcIteratorInterface*                gc_end() override;
 
@@ -94,11 +98,11 @@ namespace collector {
 
 #ifndef _GC_HIDE_METHODS
 
-    _GC_TEMPLATE gcIteratorInterface* _GC_SELF::gc_begin(){
+    _GC_TEMPLATE gcIteratorInterface* _GC_SELF::gc_begin() {
         return new gcArrayIteratorAdapter<_GC_ITERATOR>(adaptee.begin());
     }
 
-    _GC_TEMPLATE gcIteratorInterface* _GC_SELF::gc_end(){
+    _GC_TEMPLATE gcIteratorInterface* _GC_SELF::gc_end() {
         return new gcArrayIteratorAdapter<_GC_ITERATOR>(adaptee.end());
     }
 
@@ -220,25 +224,25 @@ namespace collector {
 
     _GC_TEMPLATE _GC_SELF::gcPointer() : gcPointerBase() {}
 
-    _GC_TEMPLATE _GC_SELF::gcPointer(_GC_CONTAINER_ADAPTER*const other) : gcPointerBase() {
-        object = other;
+    _GC_TEMPLATE _GC_SELF::gcPointer(_GC_CONTAINER_ADAPTER*const val) : gcPointerBase() {
+        gc_set_object(val);
     }
 
     _GC_TEMPLATE _GC_SELF::gcPointer(const _GC_SELF& other) : gcPointerBase() {
-        object = other.object;
+        gc_copy(other);
     }
 
     _GC_TEMPLATE _GC_SELF::~gcPointer() {
         // nothing
     }
 
-    _GC_TEMPLATE _GC_SELF& _GC_SELF::operator = (_GC_CONTAINER_ADAPTER*const other) {
-        object = other;
+    _GC_TEMPLATE _GC_SELF& _GC_SELF::operator = (_GC_CONTAINER_ADAPTER*const val) {
+        gc_set_object(val);
         return *this;
     }
 
     _GC_TEMPLATE _GC_SELF& _GC_SELF::operator = (const _GC_SELF& other) {
-        object = other.object;
+        gc_copy(other);
         return *this;
     }
 

@@ -2,8 +2,9 @@
 
 #include "gc.h"
 #include "gccontainer.h"
+#include <stack>
 
-namespace collector {
+namespace gcNamespace {
 
 	gcConnectThread::gcConnectThread() {
 
@@ -26,17 +27,20 @@ namespace collector {
         // Prevent that other threads to change collector attributes
 		_GC_THREAD_LOCK
 
-		_gc_collector->scope_info_remove_stack.push_back(scope_info);
+        _gc_collector->remove_scope_info_stack.push_back(scope_info);
 	}
 
 	void gcCollector::free_heap() {
 
         // Free program memory
-		for (auto position = heap.begin(); position != heap.end(); ++position)
-			delete *position;
+        for (auto position = heap.begin(); position != heap.end(); ++position)
+        {
+            if(!((*position)->mark & _gc_persistent_bit))
+                delete *position;
+        }
 	}
 
-	void gcCollector::mark() {
+    void gcCollector::mark() {
 
 		for (auto 
 			scope_info_position = scope_info_list.begin();
@@ -58,7 +62,7 @@ namespace collector {
 				// Check position is not last item in parent				
 				while (!(position->gc_is_equal(end_position)))
 				{
-                    auto object = position->gc_get_pointer()->object;
+                    auto object = position->gc_get_const_pointer()->object;
 
 					// Advance if it is null
 					if (object == 0) {
@@ -67,11 +71,11 @@ namespace collector {
 					}
 
 					// Check object is not marked
-					if (object->marked[0] == marked_condition)
+                    if ( (object->mark & _gc_mark_bit) == mark_bit)
 					{
 						// Mark
-						object->marked[0] = !marked_condition;
-						object->marked[1] = false;
+                        object->mark &= ~_gc_mark_bit;              // clear bit
+                        object->mark |= mark_bit ^ _gc_mark_bit;    // set bit
 
 						// Move to a deeper node
 						current_position_stack.push(position);
@@ -119,51 +123,67 @@ namespace collector {
 		_GC_THREAD_LOCK
 
         // Change mark state.
-		marked_condition = !marked_condition;
-
-        // Clean thread-to-remove stack
-		for (auto scope_info : scope_info_remove_stack)
-		{
-			scope_info_list.erase(scope_info->position);
-			delete scope_info->root_scope;
-			delete scope_info;
-		}
-		scope_info_remove_stack.clear();
+        mark_bit ^= _gc_mark_bit;
 	}
 
 	void gcCollector::sweep() {
 
-        // All marked to remove are free of being used. Not thread lock required
+        // Not thread lock required since objects are not in use
 
+        // Clean thread-finalized stack
+        for (auto scope_info : remove_scope_info_stack)
+        {
+            scope_info_list.erase(scope_info->position);
+            delete scope_info->root_scope;
+            delete scope_info;
+        }
+        remove_scope_info_stack.clear();
+
+        // Remove marked objects
 		for (auto position = heap.begin(); position != heap.end();)
 		{
 			auto object_pointer = *position;
 
-			if (object_pointer->marked[0] != marked_condition)
+            if( object_pointer->mark & _gc_force_remove_bit)
+            {
+                auto tmp = position;
+                ++position;
+                heap.erase(tmp);
+                delete object_pointer;
+                continue;
+            }
+
+            if ((object_pointer->mark & _gc_mark_bit) != mark_bit)
 			{
-				if (object_pointer->marked[1] == true)
+                if (object_pointer->mark & _gc_remove_bit)
 				{
 					auto tmp = position;
 					++position;
-					heap.erase(tmp);
-					delete object_pointer;
+
+                    if(!(object_pointer->mark & _gc_persistent_bit))
+                    {
+                        // remove object totally
+                        heap.erase(tmp);
+                        delete object_pointer;
+                    }
+                    continue;
 				}
-				else {
-					object_pointer->marked[1] = true;
-					++position;
-				}
+
+
+                // remove flag will delete object in next pass if
+                // nothing is done and is not persistent
+                object_pointer->mark |= _gc_remove_bit;
+                ++position;
+                continue;
 			}
-			else {
-				++position;
-			}			
+
+            ++position;
 		}
 	}
 
     void gcCollector::collect() {
 
-        // Simple and effective
-
-		gcConnectThread _gc_val;
+        gcConnectThread do_it;
 
 		auto start_time = std::chrono::steady_clock::now();
 		auto step_time = std::chrono::milliseconds(_gc_collector->sleep_time);
@@ -180,6 +200,7 @@ namespace collector {
 			end_time = start_time + step_time;
 		}
 	}
+
     gcCollector::gcCollector() : gcCollector(300) {
         // 300 ms is default collector cleaning step
     }
@@ -187,7 +208,7 @@ namespace collector {
     gcCollector::gcCollector(int sleep_time) {
 
 		_gc_collector = this;
-		_gc_collector->marked_condition = true;
+        _gc_collector->mark_bit = _gc_mark_bit;
 		_gc_collector->exit_flag = false;
         _gc_collector->sleep_time = sleep_time;    // default time step for each cleaning operation
 

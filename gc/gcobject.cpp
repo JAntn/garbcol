@@ -2,7 +2,7 @@
 #include "gcobject.h"
 #include "gccontainer.h"
 
-namespace collector {
+namespace gcNamespace {
 
 	// [1]
 	// Called before gcObject constructor and before new pointer members are declared
@@ -33,15 +33,9 @@ namespace collector {
 		_gc_scope_info->current_scope = _gc_scope_info->current_scope_stack.back();
 		_gc_scope_info->current_scope_stack.pop_back();
 
-        // Prevent object to be released before connection:
-        //  '_gc_collector->marked_condition' might change in collector thread
-		_GC_THREAD_LOCK
-
-		// Configure object and push it at heap
-		parent->marked[0] = _gc_collector->marked_condition;
-		parent->marked[1] = false;
-
-		_gc_collector->heap.push_back(parent);
+        // Simulate object as rawmem
+        parent->mark = 0;                     // set bits to zero
+        parent->mark |= _gc_rvalue_bit;       // set bit to rvalue (means that it's not stored in a smart pointer yet)
 	}
 
 	// [4]

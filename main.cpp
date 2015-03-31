@@ -22,7 +22,7 @@
 #include "gc/gcset.h"
 
 using namespace std;
-using namespace collector;
+using namespace gcNamespace;
 
 
 thread_local int thread_x;
@@ -159,6 +159,31 @@ void test_2()
     // so we can see if it was done correctly
     this_thread::sleep_for(chrono::milliseconds(1000));
     print("X_gc2 X_gc3 deleted?");
+
+    // This is a gcObject pseudo rvalue
+    X_gc *rval = new X_gc(5);
+
+    // rval now is collectable
+    gcPointer<X_gc> c1 = rval;
+
+    // Add a reference
+    gcPointer<X_gc> c2 = rval;
+
+    // make rval persistent (not collectable)
+    c1.gc_make_persistent();
+
+    // Remove references
+    c1 = p;
+    c2 = p;
+
+    this_thread::sleep_for(chrono::milliseconds(1000));
+    print("X_gc5 NOT deleted?");
+
+    // Delete object
+    c1 = rval;
+
+    //c1.gc_make_collectable();
+    c1.gc_delete_object();
 
     // Local pointers are destroyed
 }
