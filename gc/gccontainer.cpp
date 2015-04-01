@@ -2,66 +2,66 @@
 #include "gccontainer.h"
 
 namespace gcNamespace{
-	
-	gcIteratorInterface::~gcIteratorInterface(){
-		//nothing
-	}
-	
-	gcContainerInterface::~gcContainerInterface(){
-		//nothing
-	}
 
-    gcDequeContainerInterface::~gcDequeContainerInterface(){
-        //nothing
-    }
+gcIteratorInterface::~gcIteratorInterface(){
+    //nothing
+}
 
-    gcScopeIterator::gcScopeIterator(const typename gcScopeIterator::Iterator& other){
-        adaptee = other;
-    }
+gcContainerInterface::~gcContainerInterface(){
+    //nothing
+}
 
-	gcScopeIterator::~gcScopeIterator(){
-		//nothing
-	}
+gcDequeContainerInterface::~gcDequeContainerInterface(){
+    //nothing
+}
 
-	gcIteratorInterface* gcScopeIterator::gc_next(){
-		++adaptee;
-		return this;
-	}
+gcScopeIterator::gcScopeIterator(const typename gcScopeIterator::Iterator& other){
+    adaptee = other;
+}
 
-    const gcPointerBase* gcScopeIterator::gc_get_const_pointer() const {
-        return *adaptee;
-    }
+gcScopeIterator::~gcScopeIterator(){
+    //nothing
+}
 
-    bool gcScopeIterator::gc_is_equal(gcIteratorInterface*const other) const{
-		return (static_cast<gcScopeIterator*>(other)->adaptee == adaptee);
-	}
+gcIteratorInterface* gcScopeIterator::gc_next(){
+    ++adaptee;
+    return this;
+}
 
-	gcScopeContainer::~gcScopeContainer(){
-		//nothing
-	}
+const gcPointerBase* gcScopeIterator::gc_get_const_pointer() const {
+    return *adaptee;
+}
 
-    gcIteratorInterface* gcScopeContainer::gc_begin() {
-        return new gcScopeIterator(adaptee.begin());
-	}
+bool gcScopeIterator::gc_is_equal(gcIteratorInterface*const other) const{
+    return (static_cast<gcScopeIterator*>(other)->adaptee == adaptee);
+}
 
-    gcIteratorInterface* gcScopeContainer::gc_end() {
-        return new gcScopeIterator(adaptee.end());
-	}
+gcScopeContainer::~gcScopeContainer(){
+    //nothing
+}
 
-	void gcScopeContainer::gc_push_back(gcPointerBase*const val) {
+gcIteratorInterface* gcScopeContainer::gc_begin() {
+    return new gcScopeIterator(adaptee.begin());
+}
 
-        // Prevent collector while adding elements
-		_GC_THREAD_LOCK
+gcIteratorInterface* gcScopeContainer::gc_end() {
+    return new gcScopeIterator(adaptee.end());
+}
 
-		adaptee.push_back(val);
-	}
+void gcScopeContainer::gc_push_back(gcPointerBase*const val) {
 
-	void gcScopeContainer::gc_pop_back() {
+    // Prevent collector while adding elements
+    _GC_THREAD_LOCK;
 
-        // Prevent collector while removing elements
-		_GC_THREAD_LOCK
+    adaptee.push_back(val);
+}
 
-		adaptee.pop_back();
-	}
+void gcScopeContainer::gc_pop_back() {
+
+    // Prevent collector while removing elements
+    _GC_THREAD_LOCK;
+
+    adaptee.pop_back();
+}
 
 }

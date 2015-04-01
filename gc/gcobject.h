@@ -9,82 +9,82 @@
 
 namespace gcNamespace {
 
-	// Has a list of connections to gcPointerBase elements 
-	class gcObjectScope {
-	public:
+// Has a list of connections to gcPointerBase elements
+class gcObjectScope {
+public:
 
-        // List of pointers connected to this context.
-        gcContainerInterface*               childreen;
+    // List of pointers connected to this context.
+    gcContainerInterface*               childreen;
 
-                                            gcObjectScope();
-                                            ~gcObjectScope();
-	};
+    gcObjectScope();
+    ~gcObjectScope();
+};
 
-	// Base class for classes which have gcPointerBase class members
-	class gcObject {
-	public:
+// Base class for classes which have gcPointerBase class members
+class gcObject {
+public:
 
-		// Used in mark sweep algorithm
-        unsigned char                       mark;
+    // Used in mark sweep algorithm
+    unsigned char                       mark;
 
-		// Inner scope of this object
-        gcObjectScope                       object_scope;
+    // Inner scope of this object
+    gcObjectScope                       object_scope;
 
-		// Polymorphic members
-        virtual                             ~gcObject();
-	};
+    // Polymorphic members
+    virtual                             ~gcObject();
+};
 
-	// Manages gcObject constructor
-	class gcConnectObject{
-	public:
+// Manages gcObject constructor
+class gcConnectObject{
+public:
 
-        // Temporal pointer to parent
-        gcObject*                           parent;
+    // Temporal pointer to parent
+    gcObject*                           parent;
 
-                                            gcConnectObject(gcObject*const);
-                                            ~gcConnectObject();
-	};
+    gcConnectObject(gcObject*const);
+    ~gcConnectObject();
+};
 
-	// Manages gcObject destroy
-	class gcDisconnectObject{
-	public:
+// Manages gcObject destroy
+class gcDisconnectObject{
+public:
 
-        // Temporal pointer to parent
-        gcObject*                           parent;
+    // Temporal pointer to parent
+    gcObject*                           parent;
 
-                                            gcDisconnectObject(gcObject*const);
-                                            ~gcDisconnectObject();
+    gcDisconnectObject(gcObject*const);
+    ~gcDisconnectObject();
 
-	};
+};
 
-	// Adapter to use non-gcObject derived classes with pointers
-    template<class _Type>
-	class gcObjectAdapter : public gcObject{
-	public:
+// Adapter to use non-gcObject derived classes with pointers
+template<class _Type>
+class gcObjectAdapter : public gcObject{
+public:
 
-        // Adaptee object
-        _Type*                              adaptee;
+    // Adaptee object
+    _Type*                              adaptee;
 
-                                            gcObjectAdapter(_Type*const);
-                                            ~gcObjectAdapter() override;
-	};
+    gcObjectAdapter(_Type*const);
+    ~gcObjectAdapter() override;
+};
 
 
 #ifndef _GC_HIDE_METHODS
 
-	// methods
+// methods
 
-    template<class _Type>
-    gcObjectAdapter<_Type>::gcObjectAdapter(_Type*const other) {
-		gcConnectObject new_object(this);
-		adaptee = other;
-	}
+template<class _Type>
+gcObjectAdapter<_Type>::gcObjectAdapter(_Type*const other) {
+    gcConnectObject new_object(this);
+    adaptee = other;
+}
 
-    template<class _Type>
-    gcObjectAdapter<_Type>::~gcObjectAdapter() {
-		gcDisconnectObject delete_object(this);
-		delete adaptee;
-	}
+template<class _Type>
+gcObjectAdapter<_Type>::~gcObjectAdapter() {
+    gcDisconnectObject delete_object(this);
+    delete adaptee;
+}
 
 #endif
 

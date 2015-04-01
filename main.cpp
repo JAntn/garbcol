@@ -67,7 +67,7 @@ void test_0() {
 
 
 
-// A class that doesn't have any pointer member 
+// A class that doesn't have any pointer member
 // doesnt't need any special configuration
 
 class XBase {
@@ -110,7 +110,7 @@ void test_1() {
 
 // ----------------------------------------------------------------------
 
-// A class with pointer members must be 
+// A class with pointer members must be
 // configured like this template
 
 class X_gc : public gcObject {
@@ -121,22 +121,22 @@ public:
 
     X_gc(int a) {
 
-	gcConnectObject do_it(this);
+        gcConnectObject do_it(this);
 
         n = a;
         print("X_gc" + to_string(n) + " created");
-	}
+    }
 
     ~X_gc() {
 
-	gcDisconnectObject do_it(this);
+        gcDisconnectObject do_it(this);
 
         print("X_gc" + to_string(n) + " deleted");
-	}
+    }
 
-	void say_hi() {
+    void say_hi() {
         print("hi " + to_string(n) + "!");
-	}
+    }
 
 };
 
@@ -173,7 +173,7 @@ void test_2()
     c1.gc_make_persistent();
 
     // Remove references
-    c1 = p;
+    c1 = 0;
     c2 = p;
 
     this_thread::sleep_for(chrono::milliseconds(1000));
@@ -247,11 +247,11 @@ void test_5(){
 
 void thread_fn() {
 
-	thread_count++;
+    thread_count++;
     thread_x = thread_count;
 
     // Each thread Must be conneccted to grabage collector
-	gcConnectThread doit;
+    gcConnectThread doit;
 
     test_0();
     print("exit test_0");
@@ -259,13 +259,13 @@ void thread_fn() {
     test_1();
     print("exit test_1");
 
-	this_thread::sleep_for(chrono::milliseconds(1000));
+    this_thread::sleep_for(chrono::milliseconds(1000));
     print("X2 deleted?");
 
     test_2();
     print("exit test_2");
 
-	this_thread::sleep_for(chrono::milliseconds(1000));
+    this_thread::sleep_for(chrono::milliseconds(1000));
     print("X_gc1 , X_gc4 deleted?");
 
     test_3();
@@ -294,9 +294,9 @@ int main()
 {
     /* Init a garbage collected program */
     gcCollector new_collector;
-    
+
     // Time between each mark-sweep event = 300
-    // new_collector.sleep_time = 300 (better, lock it before)
+    // new_collector.sleep_time = 300 (If you do it, make a lock)
 
     void (*tst_tbl[])() = {test_0, test_1, test_2, test_3, test_4, test_5};
 
@@ -322,7 +322,7 @@ int main()
         c = getchar();
     }
 
-	thread new_thread[THREAD_MAX];
+    thread new_thread[THREAD_MAX];
 
     for (int n = 0; n < THREAD_MAX; n++){
         new_thread[n] = thread(&thread_fn);
