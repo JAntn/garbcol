@@ -4,12 +4,17 @@
 
 #ifndef _GC_LIST_H
 #define _GC_LIST_H
+
+#include <list>
 #include "gcsequence.h"
 
 namespace gcNamespace {
 
-template<class T> using gcList = gcSequenceAdapter < std::list, T > ;
-template<class T> using gcListPointer = gcPointer < gcList< T >, true >;
+template<class _Type, class _ItemPointerBase = gcSharedPointer_B_>
+using gcList = gcSequenceAdapter < std::list, _Type ,_ItemPointerBase> ;
+
+template<class _Type, class _PointerBase = gcSharedPointer_B_, class _ItemPointerBase = gcSharedPointer_B_>
+using gcListPointer = gcPointer < gcList< _Type, _ItemPointerBase >, _PointerBase, true > ;
 
 }
 

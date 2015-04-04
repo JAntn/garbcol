@@ -9,7 +9,7 @@
 #include <functional>
 #include <array>
 
-#include "gccontainer.h"
+#include "gc.h"
 
 namespace gcNamespace {
 
@@ -17,18 +17,18 @@ namespace gcNamespace {
 // GC internal pointer iterator adapter
 
 template<class _Iterator>
-class gcArrayIteratorAdapter : public gcIteratorInterface {
-public:
+class gcArrayIteratorAdapter : public gcIterator_B_ {
 
     _Iterator                           adaptee;
 
+public:
 
-    gcIteratorInterface*                gc_next() override;
-    const gcPointerBase*                gc_get_const_pointer() const override;
-    bool                                gc_is_equal(gcIteratorInterface*const other) const override;
+    gcIterator_B_*                      gc_next() override;
+    const gcPointer_B_*                 gc_get_const_pointer() const override;
+    bool                                gc_is_equal(const gcIterator_B_* other) const override;
 
     ~gcArrayIteratorAdapter() override;
-    gcArrayIteratorAdapter(const _Iterator&) override;
+    gcArrayIteratorAdapter(const _Iterator&);
 };
 
 #ifndef _GC_HIDE_METHODS
@@ -44,45 +44,54 @@ gcArrayIteratorAdapter<_Iterator>::~gcArrayIteratorAdapter(){
 }
 
 template<class _Iterator>
-gcIteratorInterface* gcArrayIteratorAdapter<_Iterator>::gc_next() {
+gcIterator_B_* gcArrayIteratorAdapter<_Iterator>::gc_next() {
     ++adaptee;
     return this;
 }
 
 template<class _Iterator>
-const gcPointerBase*  gcArrayIteratorAdapter<_Iterator>::gc_get_const_pointer() const {
+const gcPointer_B_*  gcArrayIteratorAdapter<_Iterator>::gc_get_const_pointer() const {
     return &(*adaptee);
 }
 
 template<class _Iterator>
-bool gcArrayIteratorAdapter<_Iterator>::gc_is_equal(gcIteratorInterface*const other)  const{
-    return ((static_cast<gcArrayIteratorAdapter<_Iterator>*>(other)->adaptee) == adaptee);
+bool gcArrayIteratorAdapter<_Iterator>::gc_is_equal(const gcIterator_B_* other)  const{
+    return ((static_cast<const gcArrayIteratorAdapter<_Iterator>*>(other)->adaptee) == adaptee);
 }
 
 #endif
 
-// GC internal pointer container adapter (used for list, deque, vector)
-#define _GC_TEMPLATE	template < class _Type, std::size_t _N>
-#define _GC_CONTAINER	std::array<gcPointer<_Type>, _N>
-#define _GC_ITERATOR	typename _GC_CONTAINER::iterator
-#define _GC_CONST_ITERATOR	typename _GC_CONTAINER::const_iterator
-#define _GC_SELF		gcArray<_Type, _N>
+#define _GC_TEMPLATE                    template < class _Type, std::size_t _N, class _ItemPointerBase>
+#define _GC_ADAPTEE                     std::array<gcPointer<_Type, _ItemPointerBase>, _N>
+#define _GC_ITERATOR                    typename _GC_ADAPTEE::iterator
+#define _GC_CONST_ITERATOR              typename _GC_ADAPTEE::const_iterator
+#define _GC_SELF                        gcArray<_Type, _N, _ItemPointerBase>
 
-_GC_TEMPLATE
-class gcArray :  public gcObject, public gcContainerInterface {
+template < class _Type, std::size_t _N, class _ItemPointerBase = gcSharedPointer_B_>
+class gcArray :  public gcObjectAdapter<_GC_ADAPTEE>, public gcContainer_B_ {
+
+    using  gcObjectAdapter<_GC_ADAPTEE>::adaptee;
+
+    // Any pointer
+    template<class _TypePP, class _PointerBasePP, bool _TypeIsObjectPP>
+    friend class gcPointer;
+
 public:
 
     // !!Just most basic implementation of derived types yet
-    typedef _GC_CONTAINER Container;
-    typedef _GC_ITERATOR Iterator;
+    typedef _GC_ADAPTEE container;
+    typedef _GC_ITERATOR iterator;
+    typedef _GC_CONST_ITERATOR const_iterator;
 
-    _GC_CONTAINER* adaptee;
+    template <class ..._Args>  gcArray(_Args...);
 
-    gcArray();
     ~gcArray() override;
 
-    gcIteratorInterface*                gc_begin() override;
-    gcIteratorInterface*                gc_end() override;
+    gcIterator_B_*                      gc_begin() override;
+    gcIterator_B_*                      gc_begin() const override;
+
+    gcIterator_B_*                      gc_end() override;
+    gcIterator_B_*                      gc_end() const override;
 
     bool                                operator== (const _GC_SELF& other) const;
     bool                                operator!= (const _GC_SELF& other) const;
@@ -91,57 +100,66 @@ public:
     bool                                operator>= (const _GC_SELF& other) const;
     bool                                operator<= (const _GC_SELF& other) const;
 
-    gcPointer<_Type>&                   operator[](int);
-    const gcPointer<_Type>&             operator[](int) const;
+    gcPointer<_Type,_ItemPointerBase>&
+    operator[](int);
+
+    const gcPointer<_Type,_ItemPointerBase>&
+    operator[](int) const;
+
+    const gcContainer_B_*               gc_get_const_childreen() const override;
 
 };
 
 #ifndef _GC_HIDE_METHODS
 
-_GC_TEMPLATE gcIteratorInterface* _GC_SELF::gc_begin() {
-    return new gcArrayIteratorAdapter<_GC_ITERATOR>(adaptee.begin());
+_GC_TEMPLATE gcIterator_B_* _GC_SELF::gc_begin() {
+    return new gcArrayIteratorAdapter<_GC_ITERATOR>(adaptee->begin());
 }
 
-_GC_TEMPLATE gcIteratorInterface* _GC_SELF::gc_end() {
-    return new gcArrayIteratorAdapter<_GC_ITERATOR>(adaptee.end());
+_GC_TEMPLATE gcIterator_B_* _GC_SELF::gc_begin() const {
+    return new gcArrayIteratorAdapter<_GC_CONST_ITERATOR>(adaptee->begin());
+}
+
+_GC_TEMPLATE gcIterator_B_* _GC_SELF::gc_end() {
+    return new gcArrayIteratorAdapter<_GC_ITERATOR>(adaptee->end());
+}
+
+_GC_TEMPLATE gcIterator_B_* _GC_SELF::gc_end() const {
+    return new gcArrayIteratorAdapter<_GC_CONST_ITERATOR>(adaptee->end());
 }
 
 _GC_TEMPLATE _GC_SELF::~gcArray() {
-
-    gcDisconnectObject _gc_val(this);
 
     // push state
     bool tmp = _gc_scope_info->from_allocator;
 
     _gc_scope_info->from_allocator = true;
     delete adaptee;
+    adaptee = 0;
 
     // restore state
     _gc_scope_info->from_allocator = tmp;
-
-    object_scope.childreen = 0;
 }
 
-_GC_TEMPLATE _GC_SELF::gcArray() : gcObject() {
 
-    gcConnectObject _gc_val(this);
+_GC_TEMPLATE
+template <class ..._Args>
+_GC_SELF::gcArray( _Args ...args) : gcObjectAdapter<_GC_ADAPTEE>() {
 
     bool tmp = _gc_scope_info->from_allocator;
     _gc_scope_info->from_allocator = true;
 
-    adaptee = new _GC_CONTAINER();
+    adaptee = new _GC_ADAPTEE(args...); //still not brace init {}. It is less flexible
 
     _gc_scope_info->from_allocator = tmp;
 
-    delete object_scope.childreen;
-    object_scope.childreen = this;
 }
 
-_GC_TEMPLATE gcPointer<_Type>& _GC_SELF::operator[](int i) {
+_GC_TEMPLATE gcPointer<_Type,_ItemPointerBase>& _GC_SELF::operator[](int i) {
     return (*adaptee)[i];
 }
 
-_GC_TEMPLATE const gcPointer<_Type>& _GC_SELF::operator[](int i) const {
+_GC_TEMPLATE const gcPointer<_Type,_ItemPointerBase>& _GC_SELF::operator[](int i) const {
     return (*adaptee)[i];
 }
 
@@ -150,7 +168,7 @@ _GC_TEMPLATE bool _GC_SELF::operator == (const _GC_SELF& other) const {
 }
 
 _GC_TEMPLATE bool _GC_SELF::operator != (const _GC_SELF& other) const {
-    return *adaptee != other.adaptee;
+    return *adaptee != *(other.adaptee);
 }
 
 _GC_TEMPLATE bool _GC_SELF::operator > (const _GC_SELF& other) const {
@@ -169,46 +187,60 @@ _GC_TEMPLATE bool _GC_SELF::operator <= (const _GC_SELF& other) const {
     return *adaptee <= *(other.adaptee);
 }
 
+_GC_TEMPLATE const gcContainer_B_* _GC_SELF::gc_get_const_childreen() const {
+    return this;
+}
+
 #endif
 #undef _GC_TEMPLATE
 #undef _GC_SELF
-#undef _GC_CONTAINER
+#undef _GC_ADAPTEE
 #undef _GC_ITERATOR
+#undef _GC_CONST_ITERATOR
 
 // Class gcPointer specialization for gcArray class parameter
 
-#define _GC_TEMPLATE template < class _Type, std::size_t _N>
-#define	_GC_CONTAINER_ADAPTER gcArray<_Type, _N>
-#define _GC_SELF gcPointer<_GC_CONTAINER_ADAPTER, true>
-#define _GC_CONTAINER	std::array<_Type, _N>
+#define _GC_TEMPLATE                    template < class _Type, std::size_t _N, class _PointerBase, class _ItemPointerBase>
+#define _GC_ADAPTEE                     std::array<gcPointer<_Type, _ItemPointerBase>, _N>
+#define	_GC_CONTAINER                   gcArray<_Type, _N, _ItemPointerBase>
+#define _GC_SELF                        gcPointer<_GC_CONTAINER, _PointerBase, true>
+#define _GC_CONTAINER_M_                static_cast<_GC_CONTAINER*>(this->gc_get_object())
+#define _GC_CONST_CONTAINER_M_          static_cast<_GC_CONTAINER*>(this->gc_get_const_object())
 
 _GC_TEMPLATE
-class gcPointer< _GC_CONTAINER_ADAPTER, true>
-        : public gcPointerBase{
+class gcPointer< _GC_CONTAINER, _PointerBase, true>
+        : public _PointerBase {    
 public:
 
     // !!Just most basic implementation of derived types yet
-    typedef _GC_CONTAINER Container;
-    typedef typename _GC_CONTAINER::iterator Iterator;
+    typedef _GC_ADAPTEE container;
+    typedef typename _GC_ADAPTEE::iterator iterator;
+    typedef typename _GC_ADAPTEE::const_iterator const_iterator;
 
     gcPointer();
-    gcPointer(_GC_CONTAINER_ADAPTER*const other);
+    gcPointer(_GC_CONTAINER*const other);
     gcPointer(const _GC_SELF& other);
-    ~gcPointer() override;
 
-    _GC_SELF&                           operator= (_GC_CONTAINER_ADAPTER*const other);
+    _GC_SELF&                           operator= (_GC_CONTAINER*const other);
     _GC_SELF&                           operator= (const _GC_SELF& other);
 
-    _GC_CONTAINER&                      operator*();
-    const _GC_CONTAINER&                operator*() const;
+    _GC_ADAPTEE&                        operator*();
+    const _GC_ADAPTEE&                  operator*() const;
 
-    _GC_CONTAINER*                      operator->();
-    const _GC_CONTAINER*                operator->() const;
+    _GC_ADAPTEE*                        operator->();
+    const _GC_ADAPTEE*                  operator->() const;
 
-    gcPointer<_Type>&                   operator[](int);
-    const gcPointer<_Type>&             operator[](int) const;
+    gcPointer<_Type, _ItemPointerBase>&
+    operator[](int);
 
-    template<class _Other> explicit operator gcPointer<_Other>();
+    const gcPointer<_Type, _ItemPointerBase>&
+    operator[](int) const;
+
+    template<class _Other, class _OtherPointerBase>
+    operator gcPointer<_Other, _OtherPointerBase>();
+
+    template<class _Other, class _OtherPointerBase>
+    operator const gcPointer<_Other, _OtherPointerBase>() const;
 
     bool                                operator== (const _GC_SELF& other) const;
     bool                                operator!= (const _GC_SELF& other) const;
@@ -222,90 +254,95 @@ public:
 
 // methods
 
-_GC_TEMPLATE _GC_SELF::gcPointer() : gcPointerBase() {}
+_GC_TEMPLATE _GC_SELF::gcPointer() : _PointerBase() {}
 
-_GC_TEMPLATE _GC_SELF::gcPointer(_GC_CONTAINER_ADAPTER*const val) : gcPointerBase() {
-    gc_set_object(val);
+_GC_TEMPLATE _GC_SELF::gcPointer(_GC_CONTAINER*const val) : _PointerBase() {
+    this->gc_set_object(val);
 }
 
-_GC_TEMPLATE _GC_SELF::gcPointer(const _GC_SELF& other) : gcPointerBase() {
-    gc_copy(other);
+_GC_TEMPLATE _GC_SELF::gcPointer(const _GC_SELF& other) : _PointerBase() {
+    this->gc_copy(other);
 }
 
-_GC_TEMPLATE _GC_SELF::~gcPointer() {
-    // nothing
-}
-
-_GC_TEMPLATE _GC_SELF& _GC_SELF::operator = (_GC_CONTAINER_ADAPTER*const val) {
-    gc_set_object(val);
+_GC_TEMPLATE _GC_SELF& _GC_SELF::operator = (_GC_CONTAINER*const val) {
+    this->gc_set_object(val);
     return *this;
 }
 
 _GC_TEMPLATE _GC_SELF& _GC_SELF::operator = (const _GC_SELF& other) {
-    gc_copy(other);
+    this->gc_copy(other);
     return *this;
 }
 
-_GC_TEMPLATE _GC_CONTAINER& _GC_SELF::operator*() {
-    return *(static_cast<_GC_CONTAINER_ADAPTER*>(object)->adaptee);
+_GC_TEMPLATE _GC_ADAPTEE& _GC_SELF::operator*() {
+    return *(_GC_CONTAINER_M_->adaptee);
 }
 
-_GC_TEMPLATE const _GC_CONTAINER& _GC_SELF::operator*() const{
-    return *(static_cast<_GC_CONTAINER_ADAPTER*>(object)->adaptee);
+_GC_TEMPLATE const _GC_ADAPTEE& _GC_SELF::operator*() const{
+    return *(_GC_CONST_CONTAINER_M_->adaptee);
 }
 
-_GC_TEMPLATE _GC_CONTAINER* _GC_SELF::operator->() {
-    return static_cast<_GC_CONTAINER_ADAPTER*>(object)->adaptee;
+_GC_TEMPLATE _GC_ADAPTEE* _GC_SELF::operator->() {
+    return _GC_CONTAINER_M_->adaptee;
 }
 
-_GC_TEMPLATE const _GC_CONTAINER* _GC_SELF::operator->() const {
-    return static_cast<_GC_CONTAINER_ADAPTER*>(object)->adaptee;
+_GC_TEMPLATE const _GC_ADAPTEE* _GC_SELF::operator->() const {
+    return _GC_CONST_CONTAINER_M_->adaptee;
 }
 
-_GC_TEMPLATE gcPointer<_Type>& _GC_SELF::operator[](int i) {
-    return (*(static_cast<_GC_CONTAINER_ADAPTER*>(object)->adaptee))[i];
+_GC_TEMPLATE gcPointer<_Type, _ItemPointerBase>& _GC_SELF::operator[](int i) {
+    return (*(_GC_CONTAINER_M_->adaptee))[i];
 }
 
-_GC_TEMPLATE const gcPointer<_Type>& _GC_SELF::operator[](int i) const{
-    return (*(static_cast<_GC_CONTAINER_ADAPTER*>(object)->adaptee))[i];
+_GC_TEMPLATE const gcPointer<_Type, _ItemPointerBase>& _GC_SELF::operator[](int i) const{
+    return (*(_GC_CONST_CONTAINER_M_->adaptee))[i];
 }
+
 _GC_TEMPLATE
-template<class _Other> _GC_SELF::operator gcPointer<_Other>(){
-    return gcPointer<_Other>(static_cast<_Other*>(object));
+template<class _Other, class _OtherPointerBase> _GC_SELF::operator gcPointer<_Other, _OtherPointerBase>(){
+    return gcPointer<_Other, _OtherPointerBase>(static_cast<_Other*>(this->gc_get_object()));
+}
+
+_GC_TEMPLATE
+template<class _Other, class _OtherPointerBase> _GC_SELF::operator const gcPointer<_Other, _OtherPointerBase>() const{
+    return gcPointer<_Other, _OtherPointerBase>(static_cast<_Other*>(this->gc_get_object()));
 }
 
 _GC_TEMPLATE bool _GC_SELF::operator == (const _GC_SELF& other) const {
-    return object == other.object;
+    return this->gc_get_const_object() == other.gc_get_const_object();
 }
 
 _GC_TEMPLATE bool _GC_SELF::operator != (const _GC_SELF& other) const {
-    return object != other.object;
+    return this->gc_get_const_object() != other.gc_get_const_object();
 }
 
 _GC_TEMPLATE bool _GC_SELF::operator < (const _GC_SELF& other) const {
-    return object < other.object;
+    return this->gc_get_const_object() < other.gc_get_const_object();
 }
 
 _GC_TEMPLATE bool _GC_SELF::operator > (const _GC_SELF& other) const {
-    return object > other.object;
+    return this->gc_get_const_object() > other.gc_get_const_object();
 }
 
 _GC_TEMPLATE bool _GC_SELF::operator <= (const _GC_SELF& other) const {
-    return object <= other.object;
+    return this->gc_get_const_object() <= other.gc_get_const_object();
 }
 
 _GC_TEMPLATE bool _GC_SELF::operator >= (const _GC_SELF& other) const {
-    return object >= other.object;
+    return this->gc_get_const_object() >= other.gc_get_const_object();
 }
 
 #endif
 
 #undef _GC_TEMPLATE
-#undef _GC_CONTAINER_ADAPTER
-#undef _GC_SELF
 #undef _GC_CONTAINER
+#undef _GC_SELF
+#undef _GC_ADAPTEE
+#undef _GC_CONTAINER_M_
+#undef _GC_CONST_CONTAINER_M_
 
-template<class _Type, std::size_t _N> using gcArrayPointer = gcPointer < gcArray<_Type, _N>, true >;
+template<class _Type, std::size_t _N, class _PointerBase = gcSharedPointer_B_, class _ItemPointerBase = gcSharedPointer_B_>
+using gcArrayPointer = gcPointer < gcArray<_Type, _N, _ItemPointerBase>, _PointerBase, true >;
 
 }
 

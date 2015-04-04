@@ -19,7 +19,8 @@ SOURCES += main.cpp \
     gc/gccollector.cpp \
     gc/gccontainer.cpp \
     gc/gcobject.cpp \
-    gc/gcpointer.cpp
+    gc/gcweakpointer.cpp \
+    gc/gcsharedpointer.cpp
 
 HEADERS += \
     gc/gc.h \
@@ -32,4 +33,10 @@ HEADERS += \
     gc/gcpointer.h \
     gc/gcsequence.h \
     gc/gcset.h \
-    gc/gcvector.h
+    gc/gcvector.h \
+    gc/gcpointerbase.h \
+    gc/gcweakpointer.h \
+    gc/gcsharedpointer.h \
+    gc/gcobjectbase.h \
+    gc/gcobjectadapter.h \
+    gc/gcscopedpointer.h

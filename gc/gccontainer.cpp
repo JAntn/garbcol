@@ -1,54 +1,62 @@
 #define _GC_HIDE_METHODS
-#include "gccontainer.h"
+#include "gc.h"
 
 namespace gcNamespace{
 
-gcIteratorInterface::~gcIteratorInterface(){
+gcIterator_B_::~gcIterator_B_(){
     //nothing
 }
 
-gcContainerInterface::~gcContainerInterface(){
+gcContainer_B_::~gcContainer_B_(){
     //nothing
 }
 
-gcDequeContainerInterface::~gcDequeContainerInterface(){
-    //nothing
-}
-
-gcScopeIterator::gcScopeIterator(const typename gcScopeIterator::Iterator& other){
+template<class _Iterator>
+gcScopeIterator<_Iterator>::gcScopeIterator(const _Iterator& other){
     adaptee = other;
 }
 
-gcScopeIterator::~gcScopeIterator(){
+template<class _Iterator>
+gcScopeIterator<_Iterator>::~gcScopeIterator(){
     //nothing
 }
-
-gcIteratorInterface* gcScopeIterator::gc_next(){
+template<class _Iterator>
+gcIterator_B_* gcScopeIterator<_Iterator>::gc_next(){
     ++adaptee;
     return this;
 }
 
-const gcPointerBase* gcScopeIterator::gc_get_const_pointer() const {
+template<class _Iterator>
+const gcPointer_B_* gcScopeIterator<_Iterator>::gc_get_const_pointer() const {
     return *adaptee;
 }
 
-bool gcScopeIterator::gc_is_equal(gcIteratorInterface*const other) const{
-    return (static_cast<gcScopeIterator*>(other)->adaptee == adaptee);
+template<class _Iterator>
+bool gcScopeIterator<_Iterator>::gc_is_equal(const gcIterator_B_* other) const{
+    return (static_cast<const gcScopeIterator<_Iterator>*>(other)->adaptee == adaptee);
 }
 
 gcScopeContainer::~gcScopeContainer(){
     //nothing
 }
 
-gcIteratorInterface* gcScopeContainer::gc_begin() {
-    return new gcScopeIterator(adaptee.begin());
+gcIterator_B_* gcScopeContainer::gc_begin() {
+    return new gcScopeIterator<typename gcScopeContainer::iterator>(adaptee.begin());
 }
 
-gcIteratorInterface* gcScopeContainer::gc_end() {
-    return new gcScopeIterator(adaptee.end());
+gcIterator_B_* gcScopeContainer::gc_begin() const {
+    return new gcScopeIterator<typename gcScopeContainer::const_iterator>(adaptee.begin());
 }
 
-void gcScopeContainer::gc_push_back(gcPointerBase*const val) {
+gcIterator_B_* gcScopeContainer::gc_end() {
+    return new gcScopeIterator<typename gcScopeContainer::iterator>(adaptee.end());
+}
+
+gcIterator_B_* gcScopeContainer::gc_end() const {
+    return new gcScopeIterator<typename gcScopeContainer::const_iterator>(adaptee.end());
+}
+
+void gcScopeContainer::gc_push_back(const gcPointer_B_ *val) {
 
     // Prevent collector while adding elements
     _GC_THREAD_LOCK;

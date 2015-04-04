@@ -1,6 +1,5 @@
 #define _GC_HIDE_METHODS
-#include "gcobject.h"
-#include "gccontainer.h"
+#include "gc.h"
 
 namespace gcNamespace {
 
@@ -32,10 +31,6 @@ gcConnectObject::~gcConnectObject(){
     // Return to previous context of object's context
     _gc_scope_info->current_scope = _gc_scope_info->current_scope_stack.back();
     _gc_scope_info->current_scope_stack.pop_back();
-
-    // Simulate object as rawmem
-    parent->mark = 0;                     // set bits to zero
-    parent->mark |= _gc_rvalue_bit;       // set bit to rvalue (means that it's not stored in a smart pointer yet)
 }
 
 // [4]
@@ -68,10 +63,70 @@ gcObjectScope::~gcObjectScope() {
     _gc_scope_info->current_scope_stack.pop_back();
 }
 
+
+// gcObject methods
+// ----------------
+
 gcObject::~gcObject() {
     // nothing
 }
 
+gcObject::gcObject() {
+    mark = 0;
+}
+
+void gcObject::gc_mark() {
+    mark &= ~_gc_mark_bit;                              // clear bit
+    mark |= _gc_collector->mark_bit;     // set bit
+}
+
+bool gcObject::gc_is_marked() const {
+    return (mark & _gc_mark_bit) == (_gc_collector->mark_bit & _gc_mark_bit);
+}
+
+void gcObject::gc_make_reachable() {
+    mark &= ~_gc_unreachable_bit;
+}
+
+void gcObject::gc_make_unreachable() {
+    mark |= _gc_unreachable_bit;
+}
+
+bool gcObject::gc_is_reachable() const {
+    return !(mark & _gc_unreachable_bit);
+}
+
+const gcContainer_B_* gcObject::gc_get_const_childreen() const {
+    return object_scope.childreen;
+}
+
+void gcObject::gc_make_finalizable() {
+    mark &= ~_gc_nonfinalizable_bit;
+}
+
+void gcObject::gc_make_nonfinalizable() {
+    mark |= _gc_nonfinalizable_bit;
+}
+
+bool gcObject::gc_is_finalizable() const {
+    return !(mark & _gc_nonfinalizable_bit);
+}
+
+void gcObject::gc_make_lvalue() {
+    mark |= _gc_lvalue_bit;
+}
+
+bool gcObject::gc_is_lvalue() const {
+    return mark & _gc_lvalue_bit;
+}
+
+void gcObject::gc_deallocate(){
+    mark |= _gc_force_deallocate_bit;
+}
+
+bool gcObject::gc_is_finalized() const {
+    return mark & _gc_force_deallocate_bit;
+}
 
 }
 

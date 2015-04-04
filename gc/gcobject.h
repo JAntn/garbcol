@@ -6,6 +6,7 @@
 #define _GC_OBJECT_H
 
 #include "gc.h"
+#include "gcobjectbase.h"
 
 namespace gcNamespace {
 
@@ -14,32 +15,59 @@ class gcObjectScope {
 public:
 
     // List of pointers connected to this context.
-    gcContainerInterface*               childreen;
+    gcScopeContainer*                   childreen;
 
     gcObjectScope();
     ~gcObjectScope();
 };
 
 // Base class for classes which have gcPointerBase class members
-class gcObject {
-public:
+class gcObject : public gcObject_B_{
 
     // Used in mark sweep algorithm
     unsigned char                       mark;
 
+protected:
+
     // Inner scope of this object
     gcObjectScope                       object_scope;
 
-    // Polymorphic members
-    virtual                             ~gcObject();
+    friend class gcConnectObject;
+    friend class gcDisconnectObject;
+
+public:
+
+    gcObject();
+    ~gcObject() override;
+
+    void                                gc_mark() override;
+    bool                                gc_is_marked() const override;
+
+    void                                gc_make_unreachable() override;
+    void                                gc_make_reachable() override;
+    bool                                gc_is_reachable() const override;
+
+    const gcContainer_B_*               gc_get_const_childreen() const override;
+
+    void                                gc_make_nonfinalizable() override;
+    void                                gc_make_finalizable() override;
+    bool                                gc_is_finalizable() const override;
+
+    void                                gc_make_lvalue() override;
+    bool                                gc_is_lvalue() const override;
+
+    void                                gc_deallocate() override;
+    bool                                gc_is_finalized() const override;
+
 };
 
 // Manages gcObject constructor
 class gcConnectObject{
-public:
 
     // Temporal pointer to parent
     gcObject*                           parent;
+
+public:
 
     gcConnectObject(gcObject*const);
     ~gcConnectObject();
@@ -47,46 +75,17 @@ public:
 
 // Manages gcObject destroy
 class gcDisconnectObject{
-public:
 
     // Temporal pointer to parent
     gcObject*                           parent;
+
+public:
 
     gcDisconnectObject(gcObject*const);
     ~gcDisconnectObject();
 
 };
 
-// Adapter to use non-gcObject derived classes with pointers
-template<class _Type>
-class gcObjectAdapter : public gcObject{
-public:
-
-    // Adaptee object
-    _Type*                              adaptee;
-
-    gcObjectAdapter(_Type*const);
-    ~gcObjectAdapter() override;
-};
-
-
-#ifndef _GC_HIDE_METHODS
-
-// methods
-
-template<class _Type>
-gcObjectAdapter<_Type>::gcObjectAdapter(_Type*const other) {
-    gcConnectObject new_object(this);
-    adaptee = other;
-}
-
-template<class _Type>
-gcObjectAdapter<_Type>::~gcObjectAdapter() {
-    gcDisconnectObject delete_object(this);
-    delete adaptee;
-}
-
-#endif
 
 }
 

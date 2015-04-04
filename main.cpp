@@ -20,6 +20,7 @@
 #include "gc/gclist.h"
 #include "gc/gcmap.h"
 #include "gc/gcset.h"
+#include "gc/gcarray.h"
 
 using namespace std;
 using namespace gcNamespace;
@@ -84,7 +85,7 @@ public:
         print("X" + to_string(n) + " created");
     }
 
-    virtual ~X() {
+    ~X() override {
         print("X" + to_string(n) + " deleted");
     }
 
@@ -98,7 +99,7 @@ void test_1() {
     gcPointer<XBase> a = new X(1);
     gcPointer<X> b = new X(2);
 
-    a = (gcPointer<XBase>) b;
+    a = (gcPointer<XBase>) b; // no error check yet
 
     // Wait some time until garbage collector do cleaning
     // so we can see if it was done correctly
@@ -127,7 +128,7 @@ public:
         print("X_gc" + to_string(n) + " created");
     }
 
-    ~X_gc() {
+    ~X_gc() override {
 
         gcDisconnectObject do_it(this);
 
@@ -139,6 +140,23 @@ public:
     }
 
 };
+
+
+void test_2_sub1(const gcPointer<X_gc>& c3){
+
+    // A normal pointer
+    gcPointer<X_gc> nonscoped_c3 = c3;
+
+    // this function does nothing
+}
+
+void test_2_sub2(const gcPointer<X_gc>& c4){
+
+    // A scoped pointer
+    gcScopedPointer<X_gc> scoped_c4 = c4;
+
+    // X_gc2000 will be deleted now since it is scoped here
+}
 
 void test_2()
 {
@@ -163,14 +181,14 @@ void test_2()
     // This is a gcObject pseudo rvalue
     X_gc *rval = new X_gc(5);
 
-    // rval now is collectable
+    // X_gc5 now is lvalue and finalizable
     gcPointer<X_gc> c1 = rval;
 
     // Add a reference
     gcPointer<X_gc> c2 = rval;
 
-    // make rval persistent (not collectable)
-    c1.gc_make_persistent();
+    // make X_gc5 finalizable
+    c1.gc_make_nonfinalizable();
 
     // Remove references
     c1 = 0;
@@ -181,12 +199,28 @@ void test_2()
 
     // Delete object
     c1 = rval;
+    c1.gc_deallocate();
+    c1 = 0; // Otherwise c1 will try to delete X_gc5 again at this function's end
 
-    //c1.gc_make_collectable();
-    c1.gc_delete_object();
+    //c1.gc_make_finalizable();
+
+    // test a scoped pointer
+    gcPointer<X_gc> c3 = new X_gc(1000);
+    gcPointer<X_gc> c4 = new X_gc(2000);
+
+    test_2_sub1(c3);
+    //test_2_sub2(c4);
+
+    this_thread::sleep_for(chrono::milliseconds(1000));
+    print("X_gc2000 deleted?");
+
+    c4 = 0;// Otherwise c4 will try to delete X_gc2000 again at this function's end
 
     // Local pointers are destroyed
 }
+
+
+
 
 void test_3(){
 
@@ -196,7 +230,7 @@ void test_3(){
     for (int n = 0; n < 5; n++)
         plist->push_back( new X_gc(n) );
 
-    gcList<X_gc>::Iterator i = plist->begin();
+    gcList<X_gc>::iterator i = plist->begin();
     *(++i) = new X_gc(10000);
 
     for (auto p : *plist) {
@@ -207,6 +241,8 @@ void test_3(){
     // so we can see if it was done correctly
     this_thread::sleep_for(chrono::milliseconds(1000));
     print("X_gc1 deleted?");
+
+    *plist = {{new X_gc(50),new X_gc(60)}};
 
     // Local pointers are destroyed
 }
@@ -244,6 +280,34 @@ void test_5(){
     // Local pointers are destroyed
 }
 
+void test_6(){
+
+    gcPointer<X_gc> p1 = new X_gc(1), p2 = new X_gc(2);
+
+    gcArrayPointer<X_gc,2> parr = new gcArray<X_gc,2>;
+
+    if(parr == parr){
+    parr[0]=p1;
+    parr[1]=p2;}
+
+    for (gcPointer<X_gc> p : *parr) {
+        print(to_string(p->n));
+    }
+
+    // Local pointers are destroyed
+}
+
+void test_7(){
+
+    gcPointer<X_gc> p1 = new X_gc(1);
+    gcWeakPointer<X_gc> wp = p1;
+
+    p1 = 0;
+    // Wait some time until garbage collector do cleaning
+    // so we can see if it was done correctly
+    this_thread::sleep_for(chrono::milliseconds(1000));
+    print("X_gc1 deleted?");
+}
 
 void thread_fn() {
 
@@ -266,7 +330,7 @@ void thread_fn() {
     print("exit test_2");
 
     this_thread::sleep_for(chrono::milliseconds(1000));
-    print("X_gc1 , X_gc4 deleted?");
+    print("X_gc1 , X_gc4, X_gc1000 deleted?");
 
     test_3();
     print("exit test_3");
@@ -280,27 +344,35 @@ void thread_fn() {
     this_thread::sleep_for(chrono::milliseconds(1000));
     print("X_gc2 deleted?");
 
-
     test_5();
     print("exit test_5");
 
     this_thread::sleep_for(chrono::milliseconds(1000));
     print("X_gc1 , X_gc2 deleted?");
 
+    test_6();
+    print("exit test_6");
+
+    this_thread::sleep_for(chrono::milliseconds(1000));
+    print("X_gc1 , X_gc2 deleted?");
+
+    test_7();
+    print("exit test_7");
+
     print("exiting thread");
 }
 
 int main()
-{
+{           
     /* Init a garbage collected program */
     gcCollector new_collector;
 
     // Time between each mark-sweep event = 300
     // new_collector.sleep_time = 300 (If you do it, make a lock)
 
-    void (*tst_tbl[])() = {test_0, test_1, test_2, test_3, test_4, test_5};
+    void (*tst_tbl[])() = {test_0, test_1, test_2, test_3, test_4, test_5, test_6, test_7};
 
-    for(int tst_num=0; tst_num<6; tst_num++)
+    for(int tst_num=0; tst_num<8; tst_num++)
     {
         cout << "test " << tst_num << "\n";
         cout << "--------------------------------------" << "\n";

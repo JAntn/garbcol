@@ -15,16 +15,15 @@
 
 namespace gcNamespace {
 
-const unsigned char _gc_rvalue_bit       = 0x01; // not garbage collected yet
-const unsigned char _gc_mark_bit         = 0x02; // gc marks as connected here
-const unsigned char _gc_remove_bit       = 0x04; // it was detected as not connected in sweep but will wait to next sweep to remove (just in case)
-const unsigned char _gc_persistent_bit   = 0x08; // not to delete by garbage mark.sweep algorithm
-const unsigned char _gc_force_remove_bit = 0x10; // force to delete
+const unsigned char _gc_lvalue_bit              = 0x01; // object not stored in a pointer yet
+const unsigned char _gc_mark_bit                = 0x02; // gc marks as connected here
+const unsigned char _gc_unreachable_bit         = 0x04; // it was detected as not connected in sweep but will wait to next sweep to remove (just in case)
+const unsigned char _gc_nonfinalizable_bit      = 0x08; // not to delete by garbage mark&sweep algorithm
+const unsigned char _gc_force_deallocate_bit    = 0x10; // force to delete
 
-class gcContainerInterface;
-class gcDequeContainerInterface;
-class gcPointerBase;
-class gcObject;
+class gcContainer_B_;
+class gcScopeContainer;
+class gcObject_B_;
 class gcScopeInfo;
 
 // Specific scope information at the current thread
@@ -35,10 +34,10 @@ public:
     std::list<gcScopeInfo*>::iterator   position;
 
     // A stack of scopes
-    std::list<gcContainerInterface*>    current_scope_stack;
+    std::list<gcScopeContainer*>        current_scope_stack;
 
-    gcContainerInterface*               root_scope;
-    gcContainerInterface*               current_scope;
+    gcScopeContainer*                   root_scope;
+    gcScopeContainer*                   current_scope;
     bool                                from_allocator;
 };
 
@@ -57,7 +56,7 @@ class gcCollector {
 public:
 
     // All objects are referenced in a heap
-    std::list<gcObject*>                heap;
+    std::list<gcObject_B_*>             heap;
 
     // Scope information table
     std::list<gcScopeInfo*>             scope_info_list;
@@ -90,7 +89,6 @@ public:
     void                                gc_sweep();
 
     static void                         gc_collect();
-
 };
 
 // Global objects
@@ -99,7 +97,15 @@ extern gcCollector*                     _gc_collector;
 extern thread_local gcScopeInfo*        _gc_scope_info;
 }
 
+#include "gcobjectbase.h"
 #include "gcobject.h"
+#include "gcobjectadapter.h"
+#include "gcpointerbase.h"
+#include "gcweakpointer.h"
+#include "gcsharedpointer.h"
+#include "gcscopedpointer.h"
 #include "gcpointer.h"
+#include "gccontainer.h"
+
 
 #endif // _GC_COLLECTOR_H

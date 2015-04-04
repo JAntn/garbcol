@@ -9,8 +9,11 @@
 
 namespace gcNamespace {
 
-template<class T> using gcVector = gcSequenceAdapter < std::vector, T >;
-template<class T> using gcVectorPointer = gcPointer < gcVector< T >, true >;
+template<class _Type, class _ItemPointerBase = gcSharedPointer_B_>
+using gcVector = gcSequenceAdapter < std::vector, _Type ,_ItemPointerBase> ;
+
+template<class _Type, class _PointerBase = gcSharedPointer_B_, class _ItemPointerBase = gcSharedPointer_B_>
+using gcVectorPointer = gcPointer < gcVector< _Type, _ItemPointerBase >, _PointerBase, true > ;
 
 }
 #endif // _GC_VECTOR_H

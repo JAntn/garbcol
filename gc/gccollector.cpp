@@ -1,8 +1,6 @@
 #define _GC_HIDE_METHODS
-
-#include "gc.h"
-#include "gccontainer.h"
 #include <stack>
+#include "gc.h"
 
 namespace gcNamespace {
 
@@ -33,10 +31,10 @@ gcConnectThread::~gcConnectThread(){
 void gcCollector::gc_free_heap() {
 
     // Free program memory
-    for (auto position = heap.begin(); position != heap.end(); ++position)
+    for (gcObject_B_* object : heap)
     {
-        if(!((*position)->mark & _gc_persistent_bit))
-            delete *position;
+        if(object->gc_is_finalizable())
+            delete object;
     }
 }
 
@@ -50,38 +48,43 @@ void gcCollector::gc_mark() {
     {
         auto scope_info = *scope_info_position;
 
-        std::stack<gcIteratorInterface*> current_position_stack;
-        std::stack<gcContainerInterface*> current_parent_stack;
+        std::stack<gcIterator_B_*> current_position_stack;
+        std::stack<const gcContainer_B_*> current_parent_stack;
 
-        auto parent = scope_info->root_scope;
-        auto position = parent->gc_begin();
-        auto end_position = parent->gc_end();
+        const gcContainer_B_* parent = scope_info->root_scope;  // Since parent is a const container:
+        gcIterator_B_* position = parent->gc_begin();           // This returns a const_iterator (you see a gcIterator_B_)
+        gcIterator_B_* end_position = parent->gc_end();         // This returns a const_iterator (you see a gcIterator_B_)
 
         while (true)
         {
             // Check position is not last item in parent
             while (!(position->gc_is_equal(end_position)))
             {
-                auto object = position->gc_get_const_pointer()->object;
+                const gcPointer_B_* pointer = position->gc_get_const_pointer();
 
                 // Advance if it is null
-                if (object == 0) {
+                if (pointer->gc_is_empty() || pointer->gc_is_weak_pointer()) {
                     position->gc_next();
                     continue;
                 }
 
                 // Check object is not marked
-                if ( (object->mark & _gc_mark_bit) == mark_bit)
+                if (!pointer->gc_is_marked())
                 {
                     // Mark
-                    object->mark &= ~_gc_mark_bit;              // clear bit
-                    object->mark |= mark_bit ^ _gc_mark_bit;    // set bit
+                    pointer->gc_mark();
 
                     // Move to a deeper node
                     current_position_stack.push(position);
                     current_parent_stack.push(parent);
 
-                    parent = object->object_scope.childreen;
+                    parent = pointer->gc_get_const_childreen();
+                    if (parent == 0) {
+                        position = 0;
+                        end_position = 0;
+                        break;
+                    }
+
                     position = parent->gc_begin();
 
                     // Reset end position
@@ -120,7 +123,6 @@ void gcCollector::gc_mark() {
 
     // Mark is done.
     // Change mark state. Prevent from wrong object initialization
-    // Clean thread-to-remove stack. Prevent adding new threads.
     _GC_THREAD_LOCK;
 
     // Change mark state.
@@ -143,37 +145,33 @@ void gcCollector::gc_sweep() {
     // Remove marked objects
     for (auto position = heap.begin(); position != heap.end();)
     {
-        auto object_pointer = *position;
+        gcObject_B_* object = *position;
 
-        if( object_pointer->mark & _gc_force_remove_bit)
+        if (object->gc_is_finalized())
         {
             auto tmp = position;
             ++position;
             heap.erase(tmp);
-            delete object_pointer;
+            delete object;
             continue;
         }
-
-        if ((object_pointer->mark & _gc_mark_bit) != mark_bit)
+        //
+        if (object->gc_is_marked())
         {
-            if (object_pointer->mark & _gc_remove_bit)
+            if (!object->gc_is_reachable())
             {
                 auto tmp = position;
                 ++position;
 
-                if(!(object_pointer->mark & _gc_persistent_bit))
+                if (object->gc_is_finalizable())
                 {
-                    // remove object totally
                     heap.erase(tmp);
-                    delete object_pointer;
+                    delete object;
                 }
                 continue;
             }
 
-
-            // remove flag will delete object in next pass if
-            // nothing is done and is not persistent
-            object_pointer->mark |= _gc_remove_bit;
+            object->gc_make_unreachable();
             ++position;
             continue;
         }
@@ -202,8 +200,8 @@ void gcCollector::gc_collect() {
     }
 }
 
-gcCollector::gcCollector() : gcCollector(300) {
-    // 300 ms is default collector cleaning step
+gcCollector::gcCollector() : gcCollector(100) {
+    // 100 ms is default collector cleaning step
 }
 
 gcCollector::gcCollector(int sleep_time) {

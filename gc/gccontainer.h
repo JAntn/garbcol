@@ -5,72 +5,78 @@
 #ifndef _GC_CONTAINER_H
 #define _GC_CONTAINER_H
 
-#include "gcpointer.h"
+#include <deque>
+
+#include "gc.h"
 
 namespace gcNamespace{
 
 // iterator interface class
-class gcIteratorInterface{
+class gcIterator_B_{
 public:
 
-    virtual								~gcIteratorInterface() = 0;
-    virtual const gcPointerBase*        gc_get_const_pointer() const = 0;
-    virtual gcIteratorInterface*		gc_next() = 0;
-    virtual bool						gc_is_equal(gcIteratorInterface*const other) const = 0;
+    virtual								~gcIterator_B_() = 0;
+    virtual const gcPointer_B_*         gc_get_const_pointer() const = 0;       // PROTECTION: Garbage collector can't modify pointer objects
+    virtual gcIterator_B_*              gc_next() = 0;
+    virtual bool						gc_is_equal(const gcIterator_B_* other) const = 0;
 };
 
 // container interface class
-class gcContainerInterface{
+class gcContainer_B_{
 public:
 
-    virtual								~gcContainerInterface() = 0;
+    virtual								~gcContainer_B_() = 0;
 
-    virtual gcIteratorInterface*        gc_begin() = 0;
-    virtual gcIteratorInterface*        gc_end() = 0;
+    virtual gcIterator_B_*              gc_begin() = 0;
+    virtual gcIterator_B_*              gc_begin() const = 0;
+
+    virtual gcIterator_B_*              gc_end() = 0;
+    virtual gcIterator_B_*              gc_end() const = 0;
+
 };
 
-class gcDequeContainerInterface: public gcContainerInterface{
+// scope iterator
+template<class _Iterator>
+class gcScopeIterator : public gcIterator_B_{
+
+    _Iterator                           adaptee;
+
 public:
-    ~gcDequeContainerInterface() override = 0;
-
-    virtual void						gc_push_back(gcPointerBase*const val) = 0;
-    virtual void						gc_pop_back() = 0;
-};
-
-
-// iterator base class
-class gcScopeIterator : public gcIteratorInterface{
-public:
-
-    typedef typename std::list<gcPointerBase*>::iterator Iterator;
-
-    Iterator                            adaptee;
 
     ~gcScopeIterator() override;
 
-    gcIteratorInterface*                gc_next() override;
-    const gcPointerBase*                gc_get_const_pointer() const override;
+    gcIterator_B_*                      gc_next() override;
+    const gcPointer_B_*                 gc_get_const_pointer() const override;
 
-    bool                                gc_is_equal(gcIteratorInterface*const other) const override;
+    bool                                gc_is_equal(const gcIterator_B_* other) const override;
 
-    gcScopeIterator(const Iterator&);
+    gcScopeIterator(const _Iterator&);
 
 };
 
-// container base class
-// It should have a complete set of methods of list
-class gcScopeContainer : public gcDequeContainerInterface{
+
+// scope container
+class gcScopeContainer : public gcContainer_B_ {
+
+    std::deque<const gcPointer_B_*>           adaptee;
+
 public:
 
-    std::list<gcPointerBase*>           adaptee;
+    typedef typename std::deque<const gcPointer_B_*>::iterator iterator;
+    typedef typename std::deque<const gcPointer_B_*>::const_iterator const_iterator;
+    typedef typename std::deque<const gcPointer_B_*> container;
+
 
     ~gcScopeContainer() override;
 
-    gcIteratorInterface*                gc_begin() override;
-    gcIteratorInterface*                gc_end() override;
+    gcIterator_B_*                      gc_begin() override;
+    gcIterator_B_*                      gc_begin() const override;
 
-    void                                gc_push_back(gcPointerBase*const val) override;
-    void                                gc_pop_back() override;
+    gcIterator_B_*                      gc_end() override;
+    gcIterator_B_*                      gc_end() const override;
+
+    virtual void                        gc_push_back(const gcPointer_B_* val);
+    virtual void                        gc_pop_back();
 };
 
 // Allocator for pointer stl containers
@@ -128,8 +134,10 @@ public:
 
     // Memory allocation
 
-    inline pointer allocate(size_type cnt,
-                            typename std::allocator<void>::const_pointer hint = 0) {
+    inline pointer allocate(
+            size_type cnt,
+            typename std::allocator<void>::const_pointer hint = 0)
+    {
         return reinterpret_cast<pointer>(::operator new(cnt * sizeof(value_type)));
     }
 
