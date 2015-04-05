@@ -121,11 +121,19 @@ bool gcObject::gc_is_lvalue() const {
 }
 
 void gcObject::gc_deallocate(){
-    mark |= _gc_force_deallocate_bit;
+    mark |= _gc_deallocate_bit;
 }
 
 bool gcObject::gc_is_finalized() const {
-    return mark & _gc_force_deallocate_bit;
+    return mark & _gc_deallocate_bit;
+}
+
+bool gcObject::gc_is_finalize_safe() const {
+    return mark & _gc_deallocate_is_safe_bit;
+}
+
+void gcObject::gc_make_safe_finalizable() {
+    mark |= _gc_deallocate_is_safe_bit;
 }
 
 }

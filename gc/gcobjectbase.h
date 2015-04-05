@@ -25,6 +25,8 @@ public:
 
     virtual void                        gc_deallocate() = 0;
     virtual bool                        gc_is_finalized() const = 0;
+    virtual bool                        gc_is_finalize_safe() const = 0;
+    virtual void                        gc_make_safe_finalizable() = 0;
 
     virtual                             ~gcObject_B_() {}
 };

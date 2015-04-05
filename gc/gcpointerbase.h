@@ -38,6 +38,7 @@ public:
     virtual bool                        gc_is_weak_pointer() const = 0;
 
     virtual void                        gc_deallocate() = 0;
+    virtual void                        gc_clear_if_finalized() const = 0;
 
     virtual                             ~gcPointer_B_() {}
 

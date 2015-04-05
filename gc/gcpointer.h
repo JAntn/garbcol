@@ -23,7 +23,22 @@ class gcPointer;
 
 // Class specialization for gcObject class derived types
 _GC_TEMPLATE class gcPointer<_Type, _PointerBase, true> : public _PointerBase{
+
 public:
+
+    using _PointerBase::gc_is_empty;
+    using _PointerBase::gc_copy;
+    using _PointerBase::gc_set_object;
+    using _PointerBase::gc_get_object;
+    using _PointerBase::gc_get_const_object;
+    using _PointerBase::gc_mark;
+    using _PointerBase::gc_is_marked;
+    using _PointerBase::gc_get_const_childreen;
+    using _PointerBase::gc_make_nonfinalizable;
+    using _PointerBase::gc_make_finalizable;
+    using _PointerBase::gc_is_finalizable;
+    using _PointerBase::gc_is_weak_pointer;
+    using _PointerBase::gc_deallocate;
 
     gcPointer();
     gcPointer(_Type*const other);
@@ -40,6 +55,10 @@ public:
 
     _Type&                              operator[](int);
     const _Type&                        operator[](int) const;
+
+    template<class _OtherType, class _OtherPointerBase>
+    gcPointer<_OtherType, _OtherPointerBase, true>
+    gc_to(typename std::enable_if<std::is_convertible<_Type*,_OtherType*>::value,gcObject_B_>::type*) const;
 
     template<class _OtherType, class _OtherPointerBase>
     operator gcPointer<_OtherType, _OtherPointerBase, true>();
@@ -63,80 +82,89 @@ public:
 _GC_TEMPLATE _GC_SELF::gcPointer() : _PointerBase() {}
 
 _GC_TEMPLATE _GC_SELF::gcPointer(_Type*const other) : _PointerBase() {
-    this->gc_set_object(other);
+    gc_set_object(other);
 }
 
 _GC_TEMPLATE _GC_SELF::gcPointer(const _GC_SELF& other) : _PointerBase() {
-    this->gc_copy(other);
+    gc_copy(other);
 }
 
 _GC_TEMPLATE _GC_SELF& _GC_SELF::operator = (_Type*const other) {
-    this->gc_set_object(other);
+    gc_set_object(other);
     return *this;
 }
 
 _GC_TEMPLATE _GC_SELF& _GC_SELF::operator = (const _GC_SELF& other) {
-    this->gc_copy(other);
+    gc_copy(other);
     return *this;
 }
 
 _GC_TEMPLATE _Type& _GC_SELF::operator*() {
-    return *static_cast<_Type*>(this->gc_get_object());
+    return *static_cast<_Type*>(gc_get_object());
 }
 
 _GC_TEMPLATE const _Type& _GC_SELF::operator*() const {
-    return *static_cast<_Type*>(this->gc_get_const_object());
+    return *static_cast<_Type*>(gc_get_const_object());
 }
 
 _GC_TEMPLATE _Type* _GC_SELF::operator->() {
-    return static_cast<_Type*>(this->gc_get_object());
+    return static_cast<_Type*>(gc_get_object());
 }
 
 _GC_TEMPLATE const _Type* _GC_SELF::operator->() const {
-    return static_cast<_Type*>(this->gc_get_const_object());
+    return static_cast<_Type*>(gc_get_const_object());
 }
 
 _GC_TEMPLATE
 _Type& _GC_SELF::operator[](int i) {
-    return static_cast<_Type*>(this->gc_get_object())[i];
+    return static_cast<_Type*>(gc_get_object())[i];
 }
 
 _GC_TEMPLATE const _Type& _GC_SELF::operator[](int i) const {
-    return static_cast<_Type*>(this->gc_get_const_object())[i];
+    return static_cast<_Type*>(gc_get_const_object())[i];
+}
+
+_GC_TEMPLATE
+template<class _OtherType, class _OtherPointerBase>
+gcPointer<_OtherType, _OtherPointerBase, true>
+_GC_SELF::gc_to(typename std::enable_if<std::is_convertible<_Type*,_OtherType*>::value,gcObject_B_>::type* obj) const {
+    return gcPointer<_OtherType, _OtherPointerBase, true>(static_cast<_OtherType*>(obj));
 }
 
 _GC_TEMPLATE template<class _OtherType, class _OtherPointerBase>
-        _GC_SELF::operator gcPointer<_OtherType, _OtherPointerBase, true>(){
-    return gcPointer<_OtherType, _OtherPointerBase, true>(static_cast<_OtherType*>(this->gc_get_object()));
+        _GC_SELF::operator gcPointer<_OtherType, _OtherPointerBase, true>()
+{
+    return gc_to<_OtherType, _OtherPointerBase>(gc_get_object());
 }
 
 _GC_TEMPLATE template<class _OtherType, class _OtherPointerBase>
-        _GC_SELF::operator const gcPointer<_OtherType, _OtherPointerBase, true>() const {
-    return gcPointer<_OtherType, _OtherPointerBase, true>(static_cast<_OtherType*>(this->gc_get_object()));
+        _GC_SELF::operator const gcPointer<_OtherType, _OtherPointerBase, true>() const
+{
+    return gc_to<_OtherType, _OtherPointerBase>(gc_get_object());
 }
 
 _GC_TEMPLATE bool _GC_SELF::operator== (const _GC_SELF& other) const{
-    return this->gc_get_const_object() == other.gc_get_const_object();
+    return gc_get_const_object() == other.gc_get_const_object();
 }
 
 _GC_TEMPLATE bool _GC_SELF::operator!= (const _GC_SELF& other) const{
-    return this->gc_get_const_object() != other.gc_get_const_object();
+    return gc_get_const_object() != other.gc_get_const_object();
 }
 
 _GC_TEMPLATE bool _GC_SELF::operator> (const _GC_SELF& other) const{
-    return this->gc_get_const_object() > other.gc_get_const_object();
+    return gc_get_const_object() > other.gc_get_const_object();
 }
 
 _GC_TEMPLATE bool _GC_SELF::operator< (const _GC_SELF& other) const{
-    return this->gc_get_const_object() < other.gc_get_const_object();
+    return gc_get_const_object() < other.gc_get_const_object();
 }
 
 _GC_TEMPLATE bool _GC_SELF::operator<= (const _GC_SELF& other) const{
-    return this->gc_get_const_object() <= other.gc_get_const_object();
+    return gc_get_const_object() <= other.gc_get_const_object();
 }
 
 _GC_TEMPLATE bool _GC_SELF::operator>= (const _GC_SELF& other) const{
-    return this->gc_get_const_object() >= other.gc_get_const_object();
+    return gc_get_const_object() >= other.gc_get_const_object();
 }
 
 #endif
@@ -149,6 +177,21 @@ _GC_TEMPLATE bool _GC_SELF::operator>= (const _GC_SELF& other) const{
 // Class specialization for non-gcObject derived types
 _GC_TEMPLATE class gcPointer<_Type, _PointerBase, false> : public _PointerBase{
 public:
+
+    using _PointerBase::gc_is_empty;
+    using _PointerBase::gc_copy;
+    using _PointerBase::gc_set_object;
+    using _PointerBase::gc_get_object;
+    using _PointerBase::gc_get_const_object;
+    using _PointerBase::gc_mark;
+    using _PointerBase::gc_is_marked;
+    using _PointerBase::gc_get_const_childreen;
+    using _PointerBase::gc_make_nonfinalizable;
+    using _PointerBase::gc_make_finalizable;
+    using _PointerBase::gc_is_finalizable;
+    using _PointerBase::gc_is_weak_pointer;
+    using _PointerBase::gc_deallocate;
+
 
     gcPointer();
     gcPointer(_Type*const other);
@@ -164,6 +207,10 @@ public:
     const _Type&                        operator*() const;
     const _Type*                        operator->() const;
     const _Type&                        operator[](int) const;
+
+    template<class _OtherType, class _OtherPointerBase>
+    gcPointer<_OtherType, _OtherPointerBase, false>
+    gc_to(typename std::enable_if<std::is_convertible<_Type*,_OtherType*>::value,gcObject_B_>::type*) const;
 
     template<class _OtherType, class _OtherPointerBase>
     operator gcPointer<_OtherType, _OtherPointerBase, false>();
@@ -186,94 +233,101 @@ _GC_TEMPLATE _GC_SELF::gcPointer() : _PointerBase() {}
 
 
 _GC_TEMPLATE _GC_SELF::gcPointer(_Type*const other) : _PointerBase() {
-    this->gc_set_object(new gcObjectAdapter<_Type>(other));
+    gc_set_object(new gcObjectAdapter<_Type>(other));
 }
 
 _GC_TEMPLATE _GC_SELF::gcPointer(const _GC_SELF& other) : _PointerBase() {
-    this->gc_copy(other);
+    gc_copy(other);
 }
 
 _GC_TEMPLATE _GC_SELF& _GC_SELF::operator = (_Type*const other) {
-    this->gc_set_object(new gcObjectAdapter<_Type>(other));
+    gc_set_object(new gcObjectAdapter<_Type>(other));
     return *this;
 }
 
 _GC_TEMPLATE _GC_SELF& _GC_SELF::operator = (const _GC_SELF& other) {
-    this->gc_copy(other);
+    gc_copy(other);
     return *this;
 }
 
 _GC_TEMPLATE _Type& _GC_SELF::operator*() {
-    return *(static_cast<const gcObjectAdapter<_Type>*>(this->gc_get_object())->adaptee);
+    return *(static_cast<const gcObjectAdapter<_Type>*>(gc_get_object())->adaptee);
 }
 
 _GC_TEMPLATE _Type* _GC_SELF::operator->() {
-    return static_cast<const gcObjectAdapter<_Type>*>(this->gc_get_object())->adaptee;
+    return static_cast<const gcObjectAdapter<_Type>*>(gc_get_object())->adaptee;
 }
 
 _GC_TEMPLATE _Type& _GC_SELF::operator[](int i) {
-    return (static_cast<const gcObjectAdapter<_Type>*>(this->gc_get_object())->adaptee)[i];
+    return (static_cast<const gcObjectAdapter<_Type>*>(gc_get_object())->adaptee)[i];
 }
 
 _GC_TEMPLATE const _Type& _GC_SELF::operator*() const {
-    return *(static_cast<const gcObjectAdapter<_Type>*>(this->gc_get_const_object())->adaptee);
+    return *(static_cast<const gcObjectAdapter<_Type>*>(gc_get_const_object())->adaptee);
 }
 
 _GC_TEMPLATE const _Type* _GC_SELF::operator->() const{
-    return static_cast<const gcObjectAdapter<_Type>*>(this->gc_get_const_object())->adaptee;
+    return static_cast<const gcObjectAdapter<_Type>*>(gc_get_const_object())->adaptee;
 }
 
 _GC_TEMPLATE const _Type& _GC_SELF::operator[](int i) const {
-    return (static_cast<const gcObjectAdapter<_Type>*>(this->gc_get_const_object())->adaptee)[i];
+    return (static_cast<const gcObjectAdapter<_Type>*>(gc_get_const_object())->adaptee)[i];
 }
 
-_GC_TEMPLATE template<class _OtherType, class _OtherPointerBase>
-        _GC_SELF::operator gcPointer<_OtherType, _OtherPointerBase, false>(){
+_GC_TEMPLATE
+template<class _OtherType, class _OtherPointerBase>
+gcPointer<_OtherType, _OtherPointerBase, false>
+_GC_SELF::gc_to(typename std::enable_if<std::is_convertible<_Type*,_OtherType*>::value,gcObject_B_>::type* obj) const {
     gcPointer<_OtherType, _OtherPointerBase, false> tmp;
-    tmp.gc_copy(*this);// NO TYPE CHECK YET!!!!
+    tmp.gc_set_object(static_cast<gcObjectAdapter<_OtherType>*>(obj));
     return tmp;
 }
 
 _GC_TEMPLATE template<class _OtherType, class _OtherPointerBase>
-        _GC_SELF::operator const gcPointer<_OtherType, _OtherPointerBase, false>() const{
-    gcPointer<_OtherType, _OtherPointerBase, false> tmp;
-    tmp.gc_copy(*this);// NO TYPE CHECK YET!!!!
-    return tmp;
+        _GC_SELF::operator gcPointer<_OtherType, _OtherPointerBase, false>()
+{
+    return gc_to<_OtherType, _OtherPointerBase>(gc_get_object());
+}
+
+_GC_TEMPLATE template<class _OtherType, class _OtherPointerBase>
+        _GC_SELF::operator const gcPointer<_OtherType, _OtherPointerBase, false>() const
+{
+    return gc_to<_OtherType, _OtherPointerBase>(gc_get_object());
 }
 
 _GC_TEMPLATE
 bool _GC_SELF::operator == (const _GC_SELF& other) const{
-    return static_cast<const gcObjectAdapter<_Type>*>(this->gc_get_const_object())->adaptee ==
+    return static_cast<const gcObjectAdapter<_Type>*>(gc_get_const_object())->adaptee ==
             static_cast<const gcObjectAdapter<_Type>*>(other.gc_get_const_object())->adaptee;
 }
 
 _GC_TEMPLATE
 bool _GC_SELF::operator != (const _GC_SELF& other) const{
-    return static_cast<const gcObjectAdapter<_Type>*>(this->gc_get_const_object())->adaptee !=
+    return static_cast<const gcObjectAdapter<_Type>*>(gc_get_const_object())->adaptee !=
             static_cast<const gcObjectAdapter<_Type>*>(other.gc_get_const_object())->adaptee;
 }
 
 _GC_TEMPLATE
 bool _GC_SELF::operator < (const _GC_SELF& other) const{
-    return static_cast<const gcObjectAdapter<_Type>*>(this->gc_get_const_object())->adaptee <
+    return static_cast<const gcObjectAdapter<_Type>*>(gc_get_const_object())->adaptee <
             static_cast<const gcObjectAdapter<_Type>*>(other.gc_get_const_object())->adaptee;
 }
 
 _GC_TEMPLATE
 bool _GC_SELF::operator > (const _GC_SELF& other) const{
-    return static_cast<const gcObjectAdapter<_Type>*>(this->gc_get_const_object())->adaptee >
+    return static_cast<const gcObjectAdapter<_Type>*>(gc_get_const_object())->adaptee >
             static_cast<const gcObjectAdapter<_Type>*>(other.gc_get_const_object())->adaptee;
 }
 
 _GC_TEMPLATE
 bool _GC_SELF::operator <= (const _GC_SELF& other) const{
-    return static_cast<const gcObjectAdapter<_Type>*>(this->gc_get_const_object())->adaptee <=
+    return static_cast<const gcObjectAdapter<_Type>*>(gc_get_const_object())->adaptee <=
             static_cast<const gcObjectAdapter<_Type>*>(other.gc_get_const_object())->adaptee;
 }
 
 _GC_TEMPLATE
 bool _GC_SELF::operator >= (const _GC_SELF& other) const{
-    return static_cast<const gcObjectAdapter<_Type>*>(this->gc_get_const_object())->adaptee >=
+    return static_cast<const gcObjectAdapter<_Type>*>(gc_get_const_object())->adaptee >=
             static_cast<const gcObjectAdapter<_Type>*>(other.gc_get_const_object())->adaptee;
 }
 

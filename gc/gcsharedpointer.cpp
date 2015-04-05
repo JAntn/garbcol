@@ -112,6 +112,13 @@ const gcContainer_B_* gcSharedPointer_B_::gc_get_const_childreen() const {
     return object->gc_get_const_childreen();
 }
 
+void gcSharedPointer_B_::gc_clear_if_finalized() const {
+    if(object->gc_is_finalized()) {
+        _GC_THREAD_LOCK; // It is not 100% safe. One can change object contents betwen if(.. and .._GC_THREAD_LOCK
+        object = 0;
+    }
+}
+
 }
 
 //end

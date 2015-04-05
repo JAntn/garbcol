@@ -79,6 +79,10 @@ void gcCollector::gc_mark() {
                     current_parent_stack.push(parent);
 
                     parent = pointer->gc_get_const_childreen();
+
+                    // Experimental feature: set to zero if the object is removed by user
+                    pointer->gc_clear_if_finalized();
+
                     if (parent == 0) {
                         position = 0;
                         end_position = 0;
@@ -149,13 +153,18 @@ void gcCollector::gc_sweep() {
 
         if (object->gc_is_finalized())
         {
-            auto tmp = position;
-            ++position;
-            heap.erase(tmp);
-            delete object;
-            continue;
+            if (object->gc_is_finalize_safe())
+            {
+                auto tmp = position;
+                ++position;
+                heap.erase(tmp);
+                delete object;
+                continue;
+            }else{
+                object->gc_make_safe_finalizable();
+            }
         }
-        //
+
         if (object->gc_is_marked())
         {
             if (!object->gc_is_reachable())

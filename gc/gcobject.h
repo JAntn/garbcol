@@ -58,7 +58,8 @@ public:
 
     void                                gc_deallocate() override;
     bool                                gc_is_finalized() const override;
-
+    bool                                gc_is_finalize_safe() const override;
+    void                                gc_make_safe_finalizable() override;
 };
 
 // Manages gcObject constructor

@@ -28,7 +28,9 @@ public:
 
     gcObject_B_*                            gc_get_object() const override;
     const gcObject_B_*                      gc_get_const_object() const override;
+
     void                                    gc_deallocate() override;
+    void                                    gc_clear_if_finalized() const override;
 
     void                                    gc_mark() const override;
     bool                                    gc_is_marked() const override;

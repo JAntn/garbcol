@@ -12,6 +12,20 @@ class gcScopedPointer_B_ : public _PointerBase{
 public:
 
     using _PointerBase::_PointerBase;
+    using _PointerBase::gc_is_empty;
+    using _PointerBase::gc_copy;
+    using _PointerBase::gc_set_object;
+    using _PointerBase::gc_get_object;
+    using _PointerBase::gc_get_const_object;
+    using _PointerBase::gc_mark;
+    using _PointerBase::gc_is_marked;
+    using _PointerBase::gc_get_const_childreen;
+    using _PointerBase::gc_make_nonfinalizable;
+    using _PointerBase::gc_make_finalizable;
+    using _PointerBase::gc_is_finalizable;
+    using _PointerBase::gc_is_weak_pointer;
+    using _PointerBase::gc_deallocate;
+    using _PointerBase::gc_clear_if_finalized;
 
     ~gcScopedPointer_B_() override;
 };
@@ -23,9 +37,7 @@ public:
 
 template<class _PointerBase>
 gcScopedPointer_B_<_PointerBase>::~gcScopedPointer_B_() {
-
-    this->gc_get_object()->gc_deallocate();
-    this->gc_set_object(0);
+    gc_get_object()->gc_deallocate();
 }
 
 

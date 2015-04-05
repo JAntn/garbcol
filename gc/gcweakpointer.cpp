@@ -71,5 +71,11 @@ const gcContainer_B_* gcWeakPointer_B_::gc_get_const_childreen() const{
     return object->gc_get_const_childreen();
 }
 
+void gcWeakPointer_B_::gc_clear_if_finalized() const {
+    if(object->gc_is_finalized()) {
+        object = 0;
+    }
+}
+
 }
 

@@ -150,11 +150,10 @@ void test_2_sub1(const gcPointer<X_gc>& c3){
     // this function does nothing
 }
 
-void test_2_sub2(const gcPointer<X_gc>& c4){
+void test_2_sub2( const gcPointer<X_gc>& c4){
 
     // A scoped pointer
     gcScopedPointer<X_gc> scoped_c4 = c4;
-
     // X_gc2000 will be deleted now since it is scoped here
 }
 
@@ -200,7 +199,7 @@ void test_2()
     // Delete object
     c1 = rval;
     c1.gc_deallocate();
-    c1 = 0; // Otherwise c1 will try to delete X_gc5 again at this function's end
+    //c1 = 0; // Otherwise c1 will try to delete X_gc5 again at this function's end
 
     //c1.gc_make_finalizable();
 
@@ -209,12 +208,12 @@ void test_2()
     gcPointer<X_gc> c4 = new X_gc(2000);
 
     test_2_sub1(c3);
-    //test_2_sub2(c4);
+    test_2_sub2(c4);
 
     this_thread::sleep_for(chrono::milliseconds(1000));
     print("X_gc2000 deleted?");
 
-    c4 = 0;// Otherwise c4 will try to delete X_gc2000 again at this function's end
+    print(to_string(c4 == 0));
 
     // Local pointers are destroyed
 }
