@@ -186,7 +186,7 @@ void test_2()
     // Add a reference
     gcPointer<X_gc> c2 = rval;
 
-    // make X_gc5 finalizable
+    // make X_gc5 not finalizable
     c1.gc_make_nonfinalizable();
 
     // Remove references
@@ -198,6 +198,7 @@ void test_2()
 
     // Delete object
     c1 = rval;
+    c1.gc_make_finalizable();
     c1.gc_deallocate();
     //c1 = 0; // Otherwise c1 will try to delete X_gc5 again at this function's end
 
