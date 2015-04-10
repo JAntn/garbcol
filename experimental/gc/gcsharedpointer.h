@@ -11,11 +11,13 @@ namespace gcNamespace {
 
 class gcObject_B_;
 
+
 class gcSharedPointer_B_ : public gcPointer_B_{
 
 protected:
 
     mutable gcObject_B_*                    object;
+    mutable gcObject_B_*                    snapshot;
 
 public:
 
@@ -40,6 +42,7 @@ public:
     void                                    gc_mark() const override;
     bool                                    gc_is_marked() const override;
 
+    gcContainer_B_*                         gc_get_childreen() const override;
     const gcContainer_B_*                   gc_get_const_childreen() const override;
 
     void                                    gc_make_nonfinalizable() const override;
@@ -51,6 +54,9 @@ public:
 
     gcSharedPointer_B_();
 
+    // EXPERIMETAL  ///////////////////////////////////////////////////////////////
+    gcPointer_B_*                           gc_pop_snapshot() const override;
+    void                                    gc_push_snapshot() const override;
 };
 
 

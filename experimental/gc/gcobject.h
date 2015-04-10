@@ -47,6 +47,7 @@ public:
     void                                gc_make_reachable() override;
     bool                                gc_is_reachable() const override;
 
+    gcContainer_B_*                     gc_get_childreen() const override;
     const gcContainer_B_*               gc_get_const_childreen() const override;
 
     void                                gc_make_nonfinalizable() override;

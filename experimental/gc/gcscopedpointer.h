@@ -34,6 +34,13 @@ public:
     using _PointerBase::operator>=;
 
     ~gcScopedPointer_B_() override;
+
+    // EXPERIMETAL  ///////////////////////////////////////////////////////////////
+    using _PointerBase::gc_push_snapshot;
+    using _PointerBase::gc_pop_snapshot;
+
+    using _PointerBase::gc_get_childreen;
+
 };
 
 #ifndef _GC_HIDE_METHODS

@@ -14,6 +14,7 @@ public:
     virtual void                        gc_make_reachable() = 0;
     virtual bool                        gc_is_reachable() const = 0;
 
+    virtual gcContainer_B_*             gc_get_childreen() const = 0;
     virtual const gcContainer_B_*       gc_get_const_childreen() const = 0;
 
     virtual void                        gc_make_nonfinalizable() = 0;

@@ -20,6 +20,13 @@ protected:
 
 public:
 
+    using gcPointer_B_::operator==;
+    using gcPointer_B_::operator!=;
+    using gcPointer_B_::operator<;
+    using gcPointer_B_::operator>;
+    using gcPointer_B_::operator<=;
+    using gcPointer_B_::operator>=;
+
     // Pointer contents
     bool                                    gc_is_empty() const override;
 
@@ -30,7 +37,7 @@ public:
     const gcObject_B_*                      gc_get_const_object() const override;
 
     void                                    gc_deallocate() override;
-    void                                    gc_clear_if_finalized() const override;
+    bool                                    gc_check_n_clear() const override;
 
     void                                    gc_mark() const override;
     bool                                    gc_is_marked() const override;
@@ -46,8 +53,7 @@ public:
                                             ~gcWeakPointer_B_() override;
 
     gcWeakPointer_B_();
-    gcWeakPointer_B_(gcObject_B_*const);
-    gcWeakPointer_B_(const gcPointer_B_&);
+
 };
 
 }

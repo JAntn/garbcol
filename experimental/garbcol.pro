@@ -41,4 +41,5 @@ HEADERS += \
     gc/gcobjectbase.h \
     gc/gcobjectadapter.h \
     gc/gcscopedpointer.h \
-    gc/gcuniquepointer.h
+    gc/gcuniquepointer.h \
+    gc/gcsentinel.h

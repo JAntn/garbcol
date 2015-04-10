@@ -4,7 +4,7 @@
 namespace gcNamespace{
 
 gcWeakPointer_B_::gcWeakPointer_B_() {
-    object = 0;
+    object = nullptr;
 }
 
 gcWeakPointer_B_::~gcWeakPointer_B_() {
@@ -52,7 +52,7 @@ void gcWeakPointer_B_::gc_mark() const{
 }
 
 bool gcWeakPointer_B_::gc_is_empty() const{
-    return (object == 0);
+    return (object == nullptr);
 }
 
 bool gcWeakPointer_B_::gc_is_marked() const{
@@ -63,18 +63,30 @@ const gcContainer_B_* gcWeakPointer_B_::gc_get_const_childreen() const{
     return object->gc_get_const_childreen();
 }
 
+gcContainer_B_* gcWeakPointer_B_::gc_get_childreen() const{
+    return object->gc_get_childreen();
+}
+
 bool gcWeakPointer_B_::gc_check_n_clear() const {
 
-    if (object==0)
-        return true;
+    _GC_THREAD_LOCK;
 
+    if (object == nullptr)
+        return true;
 
     if (object->gc_is_finalized()) {
-        object = 0;
+        object = nullptr;
         return true;
     }
-
     return false;
+}
+
+gcPointer_B_*  gcWeakPointer_B_::gc_pop_snapshot() const {
+    return nullptr;
+}
+
+void gcWeakPointer_B_::gc_push_snapshot() const {
+    // nothing
 }
 
 }

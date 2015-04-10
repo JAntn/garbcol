@@ -90,15 +90,22 @@ public:
     void                                gc_sweep();
 
     static void                         gc_collect();
+
+    // EXPERIMETAL  ///////////////////////////////////////////////////////////////
+    bool                                is_marking;
+
+
 };
 
 // Global objects
 
 extern gcCollector*                     _gc_collector;
 extern thread_local gcScopeInfo*        _gc_scope_info;
+
 }
 
 #include "gcobjectbase.h"
+#include "gcsentinel.h"
 #include "gcobject.h"
 #include "gcobjectadapter.h"
 #include "gcpointerbase.h"

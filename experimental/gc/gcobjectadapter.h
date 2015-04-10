@@ -41,6 +41,7 @@ public:
     void                                gc_make_reachable() override;
     bool                                gc_is_reachable() const override;
 
+    gcContainer_B_*                     gc_get_childreen() const override;
     const gcContainer_B_*               gc_get_const_childreen() const override;
 
     void                                gc_make_nonfinalizable() override;
@@ -105,10 +106,14 @@ bool gcObjectAdapter<_Type>::gc_is_reachable() const {
     return !(mark & _gc_unreachable_bit);
 }
 
+template<class _Type>
+gcContainer_B_* gcObjectAdapter<_Type>::gc_get_childreen() const {
+    return nullptr;
+}
 
 template<class _Type>
 const gcContainer_B_* gcObjectAdapter<_Type>::gc_get_const_childreen() const {
-    return 0;
+    return nullptr;
 }
 
 template<class _Type>

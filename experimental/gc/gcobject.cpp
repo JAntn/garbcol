@@ -96,6 +96,10 @@ bool gcObject::gc_is_reachable() const {
     return !(mark & _gc_unreachable_bit);
 }
 
+gcContainer_B_* gcObject::gc_get_childreen() const {
+    return object_scope.childreen;
+}
+
 const gcContainer_B_* gcObject::gc_get_const_childreen() const {
     return object_scope.childreen;
 }
