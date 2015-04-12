@@ -28,7 +28,9 @@ public:
     using gcPointer_B_::operator<=;
     using gcPointer_B_::operator>=;
 
-    // Pointer contents
+    ~gcSharedPointer_B_() override;
+    gcSharedPointer_B_();
+
     bool                                    gc_is_empty() const override;
 
     void                                    gc_copy(const gcPointer_B_&) override;
@@ -50,13 +52,9 @@ public:
     bool                                    gc_is_finalizable() const override;
     bool                                    gc_is_weak_pointer() const override;
 
-                                            ~gcSharedPointer_B_() override;
-
-    gcSharedPointer_B_();
-
-    // EXPERIMETAL  ///////////////////////////////////////////////////////////////
     gcPointer_B_*                           gc_pop_snapshot() const override;
     void                                    gc_push_snapshot() const override;
+
 };
 
 

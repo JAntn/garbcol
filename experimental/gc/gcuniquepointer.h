@@ -1,3 +1,7 @@
+// File: gcuniquepointer.h
+// Description:
+// Unique pointer implementation
+
 #ifndef _GC_UNIQUEPOINTER_H
 #define _GC_UNIQUEPOINTER_H
 
@@ -18,6 +22,9 @@ public:
     using gcPointer_B_::operator>;
     using gcPointer_B_::operator<=;
     using gcPointer_B_::operator>=;
+
+    ~gcUniquePointer_B_() override;
+    gcUniquePointer_B_();
 
     bool                                    gc_is_empty() const override;
 
@@ -40,11 +47,6 @@ public:
     bool                                    gc_is_finalizable() const override;
     bool                                    gc_is_weak_pointer() const override;
 
-                                            ~gcUniquePointer_B_() override;
-
-    gcUniquePointer_B_();
-
-    // EXPERIMETAL  ///////////////////////////////////////////////////////////////
     gcPointer_B_*                           gc_pop_snapshot() const override;
     void                                    gc_push_snapshot() const override;
 };
@@ -118,6 +120,7 @@ _GC_TEMPLATE _GC_SELF& _GC_SELF::operator = (_Type*const other) {
 }
 
 _GC_TEMPLATE _Type& _GC_SELF::operator*() {
+    _GC_THREAD_WAIT_MARKING;
     return *static_cast<_Type*>(gc_get_object());
 }
 
@@ -126,6 +129,7 @@ _GC_TEMPLATE const _Type& _GC_SELF::operator*() const {
 }
 
 _GC_TEMPLATE _Type* _GC_SELF::operator->() {
+    _GC_THREAD_WAIT_MARKING;
     return static_cast<_Type*>(gc_get_object());
 }
 
@@ -140,7 +144,6 @@ _GC_TEMPLATE _Type& _GC_SELF::operator[](int i) {
 _GC_TEMPLATE const _Type& _GC_SELF::operator[](int i) const {
     return static_cast<_Type*>(gc_get_const_object())[i];
 }
-
 
 #endif
 #undef _GC_SELF

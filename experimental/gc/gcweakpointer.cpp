@@ -1,6 +1,5 @@
 #define _GC_HIDE_METHODS
 #include "gcweakpointer.h"
-
 namespace gcNamespace{
 
 gcWeakPointer_B_::gcWeakPointer_B_() {
@@ -8,7 +7,7 @@ gcWeakPointer_B_::gcWeakPointer_B_() {
 }
 
 gcWeakPointer_B_::~gcWeakPointer_B_() {
-    // Nothing
+    _GC_THREAD_WAIT_MARKING;
 }
 
 void gcWeakPointer_B_::gc_copy(const gcPointer_B_& other) {
@@ -59,17 +58,15 @@ bool gcWeakPointer_B_::gc_is_marked() const{
     return object->gc_is_marked();
 }
 
-const gcContainer_B_* gcWeakPointer_B_::gc_get_const_childreen() const{
+const gcContainer_B_* gcWeakPointer_B_::gc_get_const_childreen() const {
     return object->gc_get_const_childreen();
 }
 
-gcContainer_B_* gcWeakPointer_B_::gc_get_childreen() const{
+gcContainer_B_* gcWeakPointer_B_::gc_get_childreen() const {
     return object->gc_get_childreen();
 }
 
 bool gcWeakPointer_B_::gc_check_n_clear() const {
-
-    _GC_THREAD_LOCK;
 
     if (object == nullptr)
         return true;

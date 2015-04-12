@@ -44,17 +44,12 @@ class gcScopeIterator : public gcIterator_B_{
     _Iterator                           adaptee;
 
 public:
-
-    ~gcScopeIterator() override;
+                                        ~gcScopeIterator() override;
+                                        gcScopeIterator(const _Iterator&);
 
     gcIterator_B_*                      gc_next() override;
-
     const gcPointer_B_*                 gc_get_const_pointer() const override;
-
     bool                                gc_is_equal(const gcIterator_B_* other) const override;
-
-    gcScopeIterator(const _Iterator&);
-
 };
 
 
@@ -69,8 +64,7 @@ public:
     typedef typename std::deque<const gcPointer_B_*>::const_iterator const_iterator;
     typedef typename std::deque<const gcPointer_B_*> container;
 
-
-    ~gcScopeContainer() override;
+                                        ~gcScopeContainer() override;
 
     gcIterator_B_*                      gc_begin() override;
     gcIterator_B_*                      gc_begin() const override;

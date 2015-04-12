@@ -316,19 +316,27 @@ void test_8(){
 
     int max = 0;
     int min = 1000000;
+    print("Please, Wait. Testing GC interruptions time");
 
-    for(int n=0;n<100; n++) {
+    auto tot_start = std::chrono::steady_clock::now();
 
-        auto start = std::chrono::steady_clock::now();
+    for(int n=0;n<30; n++) {
 
-        for(int i=0;i<100; i++)
-        for(int j=0;j<100; j++) {
-           gcPointer<int>  x = new int(0);
+        // TICK PROCESS
+        auto tick_start = std::chrono::steady_clock::now();
+
+        for(int i=0;  i<100;  i++){
+            gcPointer<int>  x = new int[20];
+            for(int ii=0; ii<100; ii++) {
+               gcPointer<int>  y = new int[20];
+               x = y;
+            }
         }
 
-        auto end = std::chrono::steady_clock::now();
+        auto tick_end = std::chrono::steady_clock::now();
 
-        int val =  std::chrono::duration_cast<std::chrono::milliseconds>(end-start).count();
+        // UPDATE MAX/MIN
+        int val =  std::chrono::duration_cast<std::chrono::microseconds>(tick_end-tick_start).count();
 
         if(val>max){
             max = val;
@@ -339,10 +347,60 @@ void test_8(){
         }
     }
 
-    print(string("checking GC thread interruptions"));
-    print(string("max tick ") + to_string(max));
-    print(string("min tick ") + to_string(min));
-    print(string("max-min ") + to_string(max-min));
+    auto tot_end = std::chrono::steady_clock::now();
+
+    int total = std::chrono::duration_cast<std::chrono::microseconds>(tot_end-tot_start).count();
+
+    print(string("GC-RESULTS:"));
+    print(string("total mcs  = ") + to_string(total));
+    print(string("max tick  = ") + to_string(max));
+    print(string("min tick  = ") + to_string(min));
+    print(string("max - min = ") + to_string(max-min));
+
+    max = 0;
+    min = 1000000;
+    print("Please, Wait. Testing standard C++");
+
+    auto tot_start_std = std::chrono::steady_clock::now();
+
+    for(int n=0;n<30; n++) {
+
+        // TICK PROCESS
+        auto tick_start_std = std::chrono::steady_clock::now();
+
+        for(int i=0;  i<100;  i++){
+            int*  x = new int[20];
+            for(int ii=0; ii<100; ii++) {
+               int*  y = new int[20];
+               x = y;
+               delete y;
+            }
+            delete x;
+        }
+
+        auto tick_end_std = std::chrono::steady_clock::now();
+
+        // UPDATE MAX/MIN
+        int val =  std::chrono::duration_cast<std::chrono::microseconds>(tick_end_std-tick_start_std).count();
+
+        if(val>max){
+            max = val;
+        }
+
+        if(val<min){
+            min = val;
+        }
+    }
+
+    auto tot_end_std = std::chrono::steady_clock::now();
+
+    total = std::chrono::duration_cast<std::chrono::microseconds>(tot_end_std-tot_start_std).count();
+
+    print(string("GC-RESULTS:"));
+    print(string("total mcs  = ") + to_string(total));
+    print(string("max tick  = ") + to_string(max));
+    print(string("min tick  = ") + to_string(min));
+    print(string("max - min = ") + to_string(max-min));
 }
 
 void thread_fn() {
@@ -395,8 +453,6 @@ void thread_fn() {
     test_7();
     print("exit test_7");
 
-    //test_8();
-
     print("exiting thread");
 }
 
@@ -408,7 +464,7 @@ int main()
     // Time between each mark-sweep event = 300
     // new_collector.sleep_time = 300 (If you do it, make a lock)
 
-    void (*tst_tbl[])() = {test_0, test_1, test_2, test_3, test_4, test_5, test_6, test_7, test_8};
+    void (*tst_tbl[])() = {test_8, test_1, test_2, test_3, test_4, test_5, test_6, test_7, test_0};
 
     for(int tst_num=0; tst_num<9; tst_num++)
     {

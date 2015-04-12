@@ -47,9 +47,9 @@ public:
     using _PointerBase::operator<=;
     using _PointerBase::operator>=;
 
-    gcPointer();
-    gcPointer(_Type*const other);
-    gcPointer(const _GC_SELF& other);
+                                        gcPointer();
+                                        gcPointer(_Type*const other);
+                                        gcPointer(const _GC_SELF& other);
 
     _GC_SELF&                           operator= (_Type*const other);
     _GC_SELF&                           operator= (const _GC_SELF& other);
@@ -116,7 +116,7 @@ _GC_TEMPLATE const _Type* _GC_SELF::operator->() const {
 }
 
 _GC_TEMPLATE
-_Type& _GC_SELF::operator[](int i) {
+_Type& _GC_SELF::operator[](int i) {    
     return static_cast<_Type*>(gc_get_object())[i];
 }
 
@@ -175,9 +175,9 @@ public:
     using _PointerBase::operator<=;
     using _PointerBase::operator>=;
 
-    gcPointer();
-    gcPointer(_Type*const other);
-    gcPointer(const _GC_SELF& other);
+                                        gcPointer();
+                                        gcPointer(_Type*const other);
+                                        gcPointer(const _GC_SELF& other);
 
     _GC_SELF&                           operator= (_Type*const other);
     _GC_SELF&                           operator= (const _GC_SELF& other);

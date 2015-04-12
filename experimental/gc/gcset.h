@@ -269,10 +269,12 @@ _GC_TEMPLATE _GC_SELF& _GC_SELF::operator = (const _GC_SELF& other) {
 }
 
 _GC_TEMPLATE _GC_ADAPTEE& _GC_SELF::operator*() {
+    _GC_THREAD_WAIT_MARKING;
     return *(_GC_CONTAINER_M_->adaptee);
 }
 
 _GC_TEMPLATE _GC_ADAPTEE* _GC_SELF::operator->() {
+    _GC_THREAD_WAIT_MARKING;
     return _GC_CONTAINER_M_->adaptee;
 }
 
@@ -289,7 +291,7 @@ template<class _OtherType, class _OtherPointerBase>
 gcPointer<_OtherType, _OtherPointerBase, true>
 _GC_SELF::gc_to(typename std::enable_if<std::is_convertible<_Type*,_OtherType*>::value,gcObject_B_>::type* obj) const {
     return gcPointer<_OtherType, _OtherPointerBase, true>(static_cast<_OtherType*>(obj));
-}
+} // (.....)
 
 _GC_TEMPLATE
 template<class _Other, class _OtherPointerBase> _GC_SELF::operator gcPointer<_Other, _OtherPointerBase>(){
@@ -300,7 +302,6 @@ _GC_TEMPLATE
 template<class _Other, class _OtherPointerBase> _GC_SELF::operator const gcPointer<_Other, _OtherPointerBase>() const{
     return gc_to<_Other, _OtherPointerBase>(gc_get_object());
 }
-
 
 #endif
 

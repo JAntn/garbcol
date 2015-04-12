@@ -1,7 +1,7 @@
 #define _GC_HIDE_METHODS
 #include "gcuniquepointer.h"
 #include "gccontainer.h"
-
+#include "gcsnapshot.h"
 namespace gcNamespace {
 
 gcUniquePointer_B_::gcUniquePointer_B_() {
@@ -19,6 +19,8 @@ gcUniquePointer_B_::gcUniquePointer_B_() {
 
 gcUniquePointer_B_::~gcUniquePointer_B_() {
 
+    _GC_THREAD_WAIT_MARKING;
+
     // Disconnect pointer from scope
     // RAII method
 
@@ -27,27 +29,18 @@ gcUniquePointer_B_::~gcUniquePointer_B_() {
     }
 }
 
-// for moving operations
 void gcUniquePointer_B_::gc_copy(const gcPointer_B_& other) {
 
-    // EXPERIMENTAL     /////////////////////////////////////////////////////
-    _GC_THREAD_LOCK;
-    if (_gc_collector->is_marking) {
-        gc_push_snapshot();
-    }
-    // EXPERIMENTAL     /////////////////////////////////////////////////////
+    // GC marking works with some snapshots of memmory
+    gc_push_snapshot();
 
     object = other.gc_get_object();
 }
 
 void gcUniquePointer_B_::gc_set_object(gcObject_B_*const obj) {
 
-    // EXPERIMENTAL     /////////////////////////////////////////////////////
-    _GC_THREAD_LOCK;
-    if (_gc_collector->is_marking) {
-        gc_push_snapshot();
-    }
-    // EXPERIMENTAL     /////////////////////////////////////////////////////
+    // GC marking works with some snapshots of memmory
+    gc_push_snapshot();
 
     if (obj == nullptr) {
         object = obj;
@@ -62,9 +55,6 @@ void gcUniquePointer_B_::gc_set_object(gcObject_B_*const obj) {
         object = obj;
         return;
     }
-
-    // forbidden but doesn't raise an error
-    //object = obj;
 }
 
 gcObject_B_* gcUniquePointer_B_::gc_get_object() const {
@@ -117,8 +107,6 @@ const gcContainer_B_* gcUniquePointer_B_::gc_get_const_childreen() const {
 
 bool gcUniquePointer_B_::gc_check_n_clear() const {
 
-    _GC_THREAD_LOCK;
-
     if (object == nullptr)
         return true;
 
@@ -131,21 +119,25 @@ bool gcUniquePointer_B_::gc_check_n_clear() const {
 
 gcPointer_B_*  gcUniquePointer_B_::gc_pop_snapshot() const {
 
-    if(snapshot == gc_sentinel) {
+    static gcSnapshot data;
+
+    if (snapshot == gc_sentinel) {
         return nullptr;
     }
 
-    gcUniquePointer_B_* pointer_ = new gcUniquePointer_B_;
-
-    pointer_->object = snapshot;
-    pointer_->snapshot = snapshot;
-
+    data.object = snapshot;
     snapshot = gc_sentinel;
-    return pointer_;
+    return &data;
 }
 
-void gcUniquePointer_B_::gc_push_snapshot() const{
-    snapshot = object;
+void gcUniquePointer_B_::gc_push_snapshot() const {
+
+    _GC_THREAD_LOCK;
+    if(_gc_collector->is_marking) {
+        if(snapshot == gc_sentinel) {
+            snapshot = object;
+        }
+    }
 }
 
 }

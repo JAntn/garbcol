@@ -19,6 +19,7 @@ public:
     using _PointerBase::gc_get_const_object;
     using _PointerBase::gc_mark;
     using _PointerBase::gc_is_marked;
+    using _PointerBase::gc_get_childreen;
     using _PointerBase::gc_get_const_childreen;
     using _PointerBase::gc_make_nonfinalizable;
     using _PointerBase::gc_make_finalizable;
@@ -32,27 +33,18 @@ public:
     using _PointerBase::operator>;
     using _PointerBase::operator<=;
     using _PointerBase::operator>=;
-
-    ~gcScopedPointer_B_() override;
-
-    // EXPERIMETAL  ///////////////////////////////////////////////////////////////
     using _PointerBase::gc_push_snapshot;
     using _PointerBase::gc_pop_snapshot;
 
-    using _PointerBase::gc_get_childreen;
-
+    ~gcScopedPointer_B_() override;
 };
 
 #ifndef _GC_HIDE_METHODS
-
-// methods
-
 
 template<class _PointerBase>
 gcScopedPointer_B_<_PointerBase>::~gcScopedPointer_B_() {
     gc_get_object()->gc_deallocate();
 }
-
 
 #endif
 

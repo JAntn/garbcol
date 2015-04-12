@@ -21,7 +21,8 @@ SOURCES += main.cpp \
     gc/gcobject.cpp \
     gc/gcweakpointer.cpp \
     gc/gcsharedpointer.cpp \
-    gc/gcuniquepointer.cpp
+    gc/gcuniquepointer.cpp \
+    gc/gcsnapshot.cpp
 
 HEADERS += \
     gc/gc.h \
@@ -42,4 +43,5 @@ HEADERS += \
     gc/gcobjectadapter.h \
     gc/gcscopedpointer.h \
     gc/gcuniquepointer.h \
-    gc/gcsentinel.h
+    gc/gcsentinel.h \
+    gc/gcsnapshot.h

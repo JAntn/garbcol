@@ -30,9 +30,9 @@ protected:
 
 public:
 
-    gcObjectAdapter();
-    gcObjectAdapter(_Type*const);
-    ~gcObjectAdapter() override;
+                                        gcObjectAdapter();
+                                        gcObjectAdapter(_Type*const);
+                                        ~gcObjectAdapter() override;
 
     void                                gc_mark() override;
     bool                                gc_is_marked() const override;
@@ -82,8 +82,8 @@ gcObjectAdapter<_Type>::~gcObjectAdapter() {
 
 template<class _Type>
 void gcObjectAdapter<_Type>::gc_mark() {
-    mark &= ~_gc_mark_bit;                              // clear bit
-    mark |= _gc_collector->mark_bit;     // set bit
+    mark &= ~_gc_mark_bit;
+    mark |= _gc_collector->mark_bit;
 }
 
 template<class _Type>

@@ -1,4 +1,4 @@
-# Smart Pointers Garbage Collector
+﻿# Smart Pointers Garbage Collector
 
 0.04.4
 
@@ -259,11 +259,12 @@ void some_fn() {
 
 gcObject derived classes are protected against the above behaviour.
 
+A hundred times slower than c++ standard worse case (It is not optimized yet)
 
 ### Future
-
 - bug fixing
 - documentation
+- pointer to pointer not implemented yet
 
 It is intended that all features of this version (0.04.3) will be forward compatible unless it is not explicitly noticed.
 

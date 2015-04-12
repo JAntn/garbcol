@@ -37,8 +37,8 @@ protected:
 
 public:
 
-    gcObject();
-    ~gcObject() override;
+                                        gcObject();
+                                        ~gcObject() override;
 
     void                                gc_mark() override;
     bool                                gc_is_marked() const override;

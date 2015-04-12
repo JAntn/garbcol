@@ -4,16 +4,35 @@
 
 namespace gcNamespace {
 
+void _gc_wait()
+{
+    if(_gc_collector->is_marking)
+    {
+        std::unique_lock<std::mutex> a_lock(_gc_collector->mutex_instance);
+
+        while(_gc_collector->is_marking)
+        {
+            // wait until signal
+            _gc_collector->is_marking_cv.wait(
+                a_lock,
+                []{
+                    return !(_gc_collector->is_marking);
+                }
+            );
+        }
+    }
+}
+
 gcConnectThread::gcConnectThread() {
 
     scope_info = new gcScopeInfo;
 
-    // Prevent that other threads to change collector attributes
     _GC_THREAD_LOCK;
 
     _gc_scope_info = scope_info;
 
     _gc_collector->scope_info_list.push_back(_gc_scope_info);
+
     _gc_scope_info->position = --(_gc_collector->scope_info_list.end());
     _gc_scope_info->root_scope = new gcScopeContainer;
     _gc_scope_info->current_scope = _gc_scope_info->root_scope;
@@ -22,7 +41,6 @@ gcConnectThread::gcConnectThread() {
 
 gcConnectThread::~gcConnectThread(){
 
-    // Prevent other threads to change collector attributes
     _GC_THREAD_LOCK;
 
     _gc_collector->remove_scope_info_stack.push_back(scope_info);
@@ -42,30 +60,38 @@ void gcCollector::gc_free_heap() {
 
 void gcCollector::gc_mark() {
 
-    // NOTE         ///////////////////////////////////////
+    // NOTE             ///////////////////////////////////////
 
     // User might change a pointer contents while it is in mark loop
     // If above sentence is removed, it is need additional protection:
 
-    // From 0. to 0.04.3 it is safe that user create new objects while in mark loop
+    // From 0. to 0.04.4 it is safe that user create new objects while in mark loop
     // Since all objects are connected to root nodes, while mark loop is running,
     // all objects will be marked UNLESS:
     //   1. A leaf is moved from a unmarked branch to a marked branch.
     //   2. A pointer changes its contents just in the midle of its processing inside <<THIS*>> loop.
 
-
-    //
     // Possible implementation of (2):
-    // Pointers have one extra reference. When a pointer is requested to change
-    // while mark loop is running, this extra reference is filled with the current object reference;
-    // Once the pointer is not used anymore in mark loop, this reference is reset.
+    // Pointers have one extra reference.
+    // When a pointer is requested to change while mark loop is running, this extra reference
+    // is filled with the current object reference. Once the pointer is not used anymore in
+    // mark loop, this reference is reset.
+    // If a pointer is requested to be deleted while mark is running, de destructor
+    // waits to marking to finish.
 
-    // This method fails yet because of (1). IF containers worked entirely with smart pointers (the links were sm.pt.)
-    // this issue would be replaced by an issue of type (2), and therefore, the mark loop would run totally concurrent.
+    // This method fails yet when (1) occurs.
+    // IF containers worked entirely with smart pointers (the links were sm.pt.) this issue
+    // would be replaced by an issue of type (2), and therefore, the mark loop would run totally
+    // concurrent.
 
-    // ENDNOTE      ///////////////////////////////////////
+    // SO, to make working that, if a container is accesed in some thread while mark loop is
+    // running, the thread waits until marking finalizes
+
+    // ENDNOTE          ///////////////////////////////////////
 
     _gc_collector->is_marking = true;
+    _gc_collector->is_marking_cv.notify_all();
+
     gcPointer_B_* pointer_snapshot = nullptr;
 
     for (auto
@@ -90,19 +116,12 @@ void gcCollector::gc_mark() {
             {
                 const gcPointer_B_* pointer = position->gc_get_const_pointer();
 
-                // EXPERIMENTAL     /////////////////////////////////////////////////////
-
-                // Get the snapshot of the pointer just before collector mark function begins
-
-                delete pointer_snapshot;
-
+                // Get the snapshot of the pointer
                 pointer_snapshot = pointer->gc_pop_snapshot();
 
                 if (pointer_snapshot != nullptr) {
                     pointer = pointer_snapshot;
                 }
-
-                // EXPERIMENTAL     /////////////////////////////////////////////////////
 
                 // Advance if it is null
                 if (pointer->gc_is_empty() || pointer->gc_is_weak_pointer() || pointer->gc_check_n_clear()) {
@@ -143,7 +162,6 @@ void gcCollector::gc_mark() {
             // Return to a shallow node
             if (!current_position_stack.empty())
             {
-
                 // Recover last position and parent
                 delete position;
                 position = current_position_stack.top();
@@ -164,16 +182,12 @@ void gcCollector::gc_mark() {
         delete end_position;
     }
 
-
-    delete pointer_snapshot;
-
-    _GC_THREAD_LOCK;
+    // Change mark state.
+    mark_bit ^= _gc_mark_bit;
 
     // Mark is done.
     _gc_collector->is_marking = false;
-
-    // Change mark state.
-    mark_bit ^= _gc_mark_bit;
+    _gc_collector->is_marking_cv.notify_all();
 }
 
 void gcCollector::gc_sweep() {
@@ -287,6 +301,7 @@ gcCollector::~gcCollector() {
 
 // One instance only allowed
 gcCollector*                _gc_collector;
+
 // Specific thread info
 thread_local gcScopeInfo*   _gc_scope_info;
 

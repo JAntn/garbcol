@@ -22,7 +22,6 @@ class gcSequenceIteratorAdapter : public gcIterator_B_ {
 
 public:
 
-
     gcIterator_B_*                      gc_next() override;
     const gcPointer_B_*                 gc_get_const_pointer() const override;
     bool                                gc_is_equal(const gcIterator_B_* other) const override;
@@ -291,10 +290,12 @@ _GC_TEMPLATE _GC_SELF& _GC_SELF::operator = (const _GC_SELF& other) {
 }
 
 _GC_TEMPLATE _GC_ADAPTEE& _GC_SELF::operator*() {
+    _GC_THREAD_WAIT_MARKING;
     return *(_GC_CONTAINER_M_->adaptee);
 }
 
 _GC_TEMPLATE _GC_ADAPTEE* _GC_SELF::operator->() {
+    _GC_THREAD_WAIT_MARKING;
     return _GC_CONTAINER_M_->adaptee;
 }
 

@@ -10,17 +10,19 @@
 #include <thread>
 #include <mutex>
 #include <type_traits>
+#include <condition_variable>
 
-#define _GC_THREAD_LOCK std::lock_guard<std::mutex> lock(_gc_collector->mutex_instance);
+#define _GC_THREAD_LOCK std::lock_guard<std::mutex> _gc_lock_guard(_gc_collector->mutex_instance);
+#define _GC_THREAD_WAIT_MARKING _gc_wait();
 
 namespace gcNamespace {
 
-const unsigned char _gc_lvalue_bit              = 0x01; // object not stored in a pointer yet
-const unsigned char _gc_mark_bit                = 0x02; // gc marks as connected here
-const unsigned char _gc_unreachable_bit         = 0x04; // it was detected as not connected in sweep but will wait to next sweep to remove (just in case)
-const unsigned char _gc_nonfinalizable_bit      = 0x08; // not to delete by garbage mark&sweep algorithm
-const unsigned char _gc_deallocate_bit          = 0x10; // force to deallocate
-const unsigned char _gc_deallocate_is_safe_bit    = 0x20; // deallocate step is safe
+const unsigned char _gc_lvalue_bit                  = 0x01; // object not stored in a pointer yet
+const unsigned char _gc_mark_bit                    = 0x02; // gc marks as connected here
+const unsigned char _gc_unreachable_bit             = 0x04; // it was detected as not connected in sweep but will wait to next sweep to remove (just in case)
+const unsigned char _gc_nonfinalizable_bit          = 0x08; // not to delete by garbage mark&sweep algorithm
+const unsigned char _gc_deallocate_bit              = 0x10; // force to deallocate
+const unsigned char _gc_deallocate_is_safe_bit      = 0x20; // deallocate step is safe
 
 class gcContainer_B_;
 class gcScopeContainer;
@@ -81,26 +83,30 @@ public:
     // Minimum time between each mark-sweep event
     int                                 sleep_time;
 
+    // Wait flag and thread support
+    bool                                is_marking;
+    std::condition_variable             is_marking_cv;
+
+    // Cts. Dts.
+
     gcCollector();
     gcCollector(int);
     ~gcCollector();
 
+    // Methods
     void                                gc_free_heap();
     void                                gc_mark();
     void                                gc_sweep();
-
     static void                         gc_collect();
-
-    // EXPERIMETAL  ///////////////////////////////////////////////////////////////
-    bool                                is_marking;
-
-
 };
 
 // Global objects
 
 extern gcCollector*                     _gc_collector;
 extern thread_local gcScopeInfo*        _gc_scope_info;
+
+// Waits until marking finishes
+void _gc_wait();
 
 }
 

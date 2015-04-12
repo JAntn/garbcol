@@ -27,8 +27,8 @@ public:
     const gcPointer_B_*                 gc_get_const_pointer() const override;
     bool                                gc_is_equal(const gcIterator_B_* other) const override;
 
-    ~gcArrayIteratorAdapter() override;
-    gcArrayIteratorAdapter(const _Iterator&);
+                                        ~gcArrayIteratorAdapter() override;
+                                        gcArrayIteratorAdapter(const _Iterator&);
 };
 
 #ifndef _GC_HIDE_METHODS
@@ -93,6 +93,8 @@ public:
     gcIterator_B_*                      gc_end() override;
     gcIterator_B_*                      gc_end() const override;
 
+    const gcContainer_B_*               gc_get_const_childreen() const override;
+
     bool                                operator== (const _GC_SELF& other) const;
     bool                                operator!= (const _GC_SELF& other) const;
     bool                                operator> (const _GC_SELF& other) const;
@@ -105,9 +107,6 @@ public:
 
     const gcPointer<_Type,_ItemPointerBase>&
     operator[](int) const;
-
-    const gcContainer_B_*               gc_get_const_childreen() const override;
-
 };
 
 #ifndef _GC_HIDE_METHODS
@@ -294,6 +293,7 @@ _GC_TEMPLATE _GC_SELF& _GC_SELF::operator = (const _GC_SELF& other) {
 }
 
 _GC_TEMPLATE _GC_ADAPTEE& _GC_SELF::operator*() {
+    _GC_THREAD_WAIT_MARKING;
     return *(_GC_CONTAINER_M_->adaptee);
 }
 
@@ -302,6 +302,7 @@ _GC_TEMPLATE const _GC_ADAPTEE& _GC_SELF::operator*() const{
 }
 
 _GC_TEMPLATE _GC_ADAPTEE* _GC_SELF::operator->() {
+    _GC_THREAD_WAIT_MARKING;
     return _GC_CONTAINER_M_->adaptee;
 }
 

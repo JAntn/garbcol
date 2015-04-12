@@ -1,7 +1,8 @@
 #define _GC_HIDE_METHODS
 #include "gcsharedpointer.h"
 #include "gccontainer.h"
-
+#include "gcsnapshot.h"
+#include <iostream>
 namespace gcNamespace {
 
 gcSharedPointer_B_::gcSharedPointer_B_() {
@@ -19,6 +20,8 @@ gcSharedPointer_B_::gcSharedPointer_B_() {
 
 gcSharedPointer_B_::~gcSharedPointer_B_() {
 
+    _GC_THREAD_WAIT_MARKING;
+
     // Disconnect pointer from scope
     // RAII method
 
@@ -29,24 +32,16 @@ gcSharedPointer_B_::~gcSharedPointer_B_() {
 
 void gcSharedPointer_B_::gc_copy(const gcPointer_B_& other) {
 
-    // EXPERIMENTAL     /////////////////////////////////////////////////////
-    _GC_THREAD_LOCK;
-    if (_gc_collector->is_marking) {
-        gc_push_snapshot();
-    }
-    // EXPERIMENTAL     /////////////////////////////////////////////////////
+    // GC marking works with some snapshots of memory
+    gc_push_snapshot();
 
     object = other.gc_get_object();
 }
 
 void gcSharedPointer_B_::gc_set_object(gcObject_B_*const obj) {
 
-    // EXPERIMENTAL     /////////////////////////////////////////////////////
-    _GC_THREAD_LOCK;
-    if (_gc_collector->is_marking) {
-        gc_push_snapshot();
-    }
-    // EXPERIMENTAL     /////////////////////////////////////////////////////
+    // GC marking works with some snapshots of memory
+    gc_push_snapshot();
 
     if (obj == nullptr) {
         object = obj;
@@ -117,8 +112,6 @@ const gcContainer_B_* gcSharedPointer_B_::gc_get_const_childreen() const {
 
 bool gcSharedPointer_B_::gc_check_n_clear() const {
 
-    _GC_THREAD_LOCK;
-
     if (object == nullptr)
         return true;
 
@@ -126,32 +119,32 @@ bool gcSharedPointer_B_::gc_check_n_clear() const {
         object = nullptr;
         return true;
     }
-    return false;
 
+    return false;
 }
 
-// EXPERIMENTAL     /////////////////////////////////////////////////////
-
 gcPointer_B_*  gcSharedPointer_B_::gc_pop_snapshot() const {
+
+    static gcSnapshot data;
 
     if (snapshot == gc_sentinel) {
         return nullptr;
     }
 
-    gcSharedPointer_B_* pointer_ = new gcSharedPointer_B_;
-
-    pointer_->object = snapshot;
-    pointer_->snapshot = snapshot;
-
+    data.object = snapshot;
     snapshot = gc_sentinel;
-    return pointer_;
-
+    return &data;
 }
 
-void gcSharedPointer_B_::gc_push_snapshot() const{
-    snapshot = object;
+void gcSharedPointer_B_::gc_push_snapshot() const {
+
+    _GC_THREAD_LOCK;
+    if(_gc_collector->is_marking) {
+        if(snapshot == gc_sentinel) {
+            snapshot = object;
+        }
+    }
 }
-// EXPERIMENTAL     /////////////////////////////////////////////////////
 
 }
 

@@ -87,13 +87,15 @@ public:
     typedef _GC_CONST_ITERATOR const_iterator;
 
     template<class ..._Args>            gcMap(_Args...);
-    ~gcMap() override;
+                                        ~gcMap() override;
 
     gcIterator_B_*                      gc_begin() override;
     gcIterator_B_*                      gc_begin() const override;
 
     gcIterator_B_*                      gc_end() override;
     gcIterator_B_*                      gc_end() const override;
+
+    const gcContainer_B_*               gc_get_const_childreen() const override;
 
     gcPointer<_Type,_ItemPointerBase>&
     operator[](const _Key &);
@@ -108,7 +110,6 @@ public:
     bool                        		operator>= (const _GC_SELF& other) const;
     bool                        		operator<= (const _GC_SELF& other) const;
 
-    const gcContainer_B_*               gc_get_const_childreen() const override;
 };
 
 #ifndef _GC_HIDE_METHODS
@@ -233,9 +234,9 @@ public:
     typedef typename _GC_ADAPTEE::iterator iterator;
     typedef typename _GC_ADAPTEE::const_iterator const_iterator;
 
-    gcPointer();
-    gcPointer(_GC_CONTAINER*const other);
-    gcPointer(const _GC_SELF& other);
+                                        gcPointer();
+                                        gcPointer(_GC_CONTAINER*const other);
+                                        gcPointer(const _GC_SELF& other);
 
     _GC_SELF&                           operator= (_GC_CONTAINER*const other);
     _GC_SELF&                           operator= (const _GC_SELF& other);
@@ -261,7 +262,6 @@ public:
 
     const gcPointer<_Type, _ItemPointerBase>&
     operator[] (const _Key&) const;
-
 };
 
 #ifndef _GC_HIDE_METHODS
@@ -289,14 +289,16 @@ _GC_TEMPLATE _GC_SELF& _GC_SELF::operator = (const _GC_SELF& other) {
 }
 
 _GC_TEMPLATE _GC_ADAPTEE& _GC_SELF::operator*() {
+    _GC_THREAD_WAIT_MARKING;
     return *(_GC_CONTAINER_M_->adaptee);
 }
 
-_GC_TEMPLATE const _GC_ADAPTEE& _GC_SELF::operator*() const{
+_GC_TEMPLATE const _GC_ADAPTEE& _GC_SELF::operator*() const{   
     return *(_GC_CONST_CONTAINER_M_->adaptee);
 }
 
 _GC_TEMPLATE _GC_ADAPTEE* _GC_SELF::operator->() {
+    _GC_THREAD_WAIT_MARKING;
     return _GC_CONTAINER_M_->adaptee;
 }
 
@@ -328,7 +330,6 @@ _GC_TEMPLATE gcPointer<_Type, _ItemPointerBase>& _GC_SELF::operator[](const _Key
 _GC_TEMPLATE const gcPointer<_Type, _ItemPointerBase>& _GC_SELF::operator[](const _Key& k) const {
     return (*(_GC_CONST_CONTAINER_M_->adaptee))[k];
 }
-
 
 #endif
 
