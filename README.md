@@ -88,7 +88,7 @@ You can find them in:
 
 `gcarray.h, gcdeque.h, gclist.h, gcvector.h, gcmap.h, gcset.h`
 
-The STL cannot be used with smart pointers directly. The garbcol library adapts the STL containers, but with a new appareance. Containers use their own allocator.
+The STL cannot be used with smart pointers directly. The garbcol library adapts the STL containers, but with a new appareance. Containers use specific allocator.
 
 ### New classes pattern
 
@@ -155,7 +155,7 @@ Weak pointers do not mark objects as reachable.
 
 ```
 
-Unique pointers protect data against multiple references to the same object.
+Unique pointers protect data against creating multiple references to the same object.
 
 ```C++
 
@@ -205,7 +205,7 @@ You can build other pointers using template parameters.
     
 ```
 
-You can protect and object against be deleted.
+You can protect and object of being deleted.
 
 ```C++
 
@@ -231,7 +231,7 @@ You can force deallocation.
 
 ```
 
-(in)equality operators are implemented to compare pointer contents. gcNullPointer is defined, but you can use 0 or nullptr anyway.
+(in)equality operators are implemented to compare pointer contents. You can use 0 or nullptr anyway.
 
 
 ### Limitations
@@ -259,14 +259,15 @@ void some_fn() {
 
 gcObject derived classes are protected against the above behaviour.
 
-A hundred times slower than c++ standard worse case (It is not optimized yet)
+Twenty times slower than c++ standard worse case (It is not optimized yet)
+
+Pointers to pointers not allowed. You can use an object with a pointer member to get this functionality.
 
 ### Future
 - bug fixing
 - documentation
-- pointer to pointer not implemented yet
 
-It is intended that all features of this version (0.04.3) will be forward compatible unless it is not explicitly noticed.
+It is intended that all features of version (0.04.3) will be forward compatible unless it is not explicitly noticed.
 
 ### Experimental
 
