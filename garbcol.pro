@@ -15,13 +15,14 @@ CONFIG   += c++11
 TEMPLATE = app
 
 
-SOURCES += main.cpp \
+SOURCES += \
     gc/gccollector.cpp \
     gc/gccontainer.cpp \
     gc/gcobject.cpp \
     gc/gcweakpointer.cpp \
     gc/gcsharedpointer.cpp \
-    gc/gcuniquepointer.cpp
+    gc/gcuniquepointer.cpp \
+    main.cpp \
 
 HEADERS += \
     gc/gc.h \
@@ -41,4 +42,6 @@ HEADERS += \
     gc/gcobjectbase.h \
     gc/gcobjectadapter.h \
     gc/gcscopedpointer.h \
-    gc/gcuniquepointer.h
+    gc/gcuniquepointer.h \
+    gc/gcsentinel.h \
+    gc/gcmacro.h

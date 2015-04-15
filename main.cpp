@@ -14,7 +14,7 @@
 // RULE 4.2:    CALL MACRO _GC_DECLARE( `this_class`, `base_class` ) WHERE `base_class`
 //              CAN BE gcObject OR ANY DERIVED FROM IT
 //
-// RULE 4.2:    USE gc_create AND gc_destroy INSTEAD CONSTRUCTORS AND DESTRUCTORS
+// RULE 4.2:    USE gc_new AND gc_delete INSTEAD CONSTRUCTORS AND DESTRUCTORS
 //
 // RULE 5:      POINTERS TO POINTERS AR NOT ALLOWED
 
@@ -115,10 +115,9 @@ void test_1() {
 
 class Dog : public gcObject
 {
-    _GC_DECLARE(Dog,gcObject)
+    GC_CONNECT_OBJECT(Dog,gcObject)
 
     gcPointer<Dog> dog_ptr;
-
 
     void gc_create(int c ) {
 
@@ -137,7 +136,7 @@ public:
 
 class TalkingDog : public  Dog, public TalkInterface
 {
-    _GC_DECLARE(TalkingDog, Dog)
+    GC_CONNECT_OBJECT(TalkingDog, Dog)
 
     gcPointer<TalkingDog> p;
     int n;
@@ -145,7 +144,7 @@ class TalkingDog : public  Dog, public TalkInterface
     void gc_create(int a) {
         n = a;
         print("TalkingDog" + to_string(n) + " created");
-        if (n == 1000){ this->Dog::gc_create(1000); }
+        if (n == 1000){ this->Dog::gc_create(1); }
     }
 
     void gc_destroy() {

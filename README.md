@@ -1,6 +1,6 @@
 ﻿# Smart Pointers Garbage Collector
 
-0.04.5
+0.04.5 fix1
 
 Smart pointers with mark&sweep garbage collector and multi-thread support.
 
@@ -102,7 +102,7 @@ If a class has a smart pointer member, then it must have the following pattern:
 
 class FourLegs: public gcObject 
 {
-    _GC_DECLARE(FourLegs, gcObject)
+    GC_CONNECT_OBJECT(FourLegs, gcObject)
 
     gc_create(`some_args`) {
 	// ...
@@ -130,7 +130,7 @@ Derived types should call to base class constructor. Base constructors are not c
 
 class Dog: public FourLegs
 {
-    _GC_DECLARE(Dog, FourLegs)
+    GC_CONNECT_OBJECT(Dog, FourLegs)
 
     gc_create(char* name) {
 	// ...

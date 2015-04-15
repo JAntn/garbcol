@@ -1,7 +1,7 @@
 #ifndef _GC_MACRO
 #define _GC_MACRO
 
-#define _GC_DECLARE(__GC_SELF,__GC_BASE)\
+#define GC_CONNECT_OBJECT(__GC_SELF,__GC_BASE)\
     public:\
     template<class ...Args>\
     __GC_SELF(Args... args) : __GC_BASE(gc_delegate) {\
