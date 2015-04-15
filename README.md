@@ -4,13 +4,13 @@
 
 Smart pointers with mark&sweep garbage collector and multi-thread support.
 
-This library provide tools for programming in C++11 with automatic memory management. It is written for a GNU compiler. 
+This library provides tools for programming in C++11 with automatic memory management. It is written with a GNU compiler. 
 
 Provides smart pointers whose contents are freed automatically, multi-thread compatibility, and a collection of containers that 'wrap' some STL classes.
 
 ### Changes 0.04.5
 
-Some important changes in declarationof new GC classes. Now, derived classes can be derived and so.
+Some important changes in declaration of new GC classes. Now, derived classes can be derived and so.
 
 ### Initialization
 
@@ -32,7 +32,7 @@ int main(int argc, char* argv[])
 ```
 ### Smart Pointers
 
-Creating and using pointers is straight:
+Creating and using pointers is not very complicated:
 
 ```C++
 
@@ -47,12 +47,13 @@ i[0] = 0;
 i[1] = 1;
 i[2] = 2;
 
-i = new int; // previous array is freed
+i = new int; 
+// previous array is freed
 *i = 1;
 
 ```
 
-You have access to the contents and member functions through operators * and -> . If the content is an array, you can acces to items with operator [].
+You have to access to the contents and member functions through operators * and -> . If the content is an array, you can acces to items with operator [].
 
 Do not initialize pointers with static memory. 
 
@@ -92,7 +93,7 @@ You can find them in:
 
 `gcarray.h, gcdeque.h, gclist.h, gcvector.h, gcmap.h, gcset.h`
 
-The STL cannot be used with smart pointers directly. The garbcol library adapts the STL containers, but with a new appareance. Containers use specific allocator.
+The STL cannot be used directly with smart pointers. The garbcol library adapts the STL containers, but with a new appareance. Containers use specific allocator.
 
 ### New classes pattern
 
@@ -122,9 +123,10 @@ class FourLegs: public gcObject
 
 ```
 
-These classes must be derived from gcObject or any other derived from it but only one at once. Then, call to macro _GC_DECLARE as in the example.
+These classes must be derived from gcObject or any other derived from it, and only one at once. In addition, they can inherit a class without any constructor. Then, call to macro GC_CONNECT_OBJECT as in the example.
 
-Derived types should call to base class constructor. Base constructors are not called automatically. Destructor is called automatically. For example:
+
+Derived types should call to base class constructor since they are not called automatically. Destructor is called automatically. For example:
 
 ```C++
 
@@ -133,12 +135,12 @@ class Dog: public FourLegs
     GC_CONNECT_OBJECT(Dog, FourLegs)
 
     gc_create(char* name) {
-	// ...
-	FourLegs::gc_create({a, b, c, d});
+    // ...
+    FourLegs::gc_create({a, b, c, d});
     }
 
     gc_destroy() {
-        // ...
+    // ...
     }
 
     gcPointer<Dog> friend;
@@ -147,7 +149,7 @@ class Dog: public FourLegs
 
 ```
 
-Then, it can be used like normal classes:
+Then, heyt can be used like normal classes:
 
 ```C++
 
