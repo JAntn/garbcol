@@ -23,7 +23,6 @@ class gcPointer;
 
 // Class specialization for gcObject class derived types
 _GC_TEMPLATE class gcPointer<_Type, _PointerBase, true> : public _PointerBase{
-
 public:
 
     using _PointerBase::gc_is_empty;
@@ -116,7 +115,7 @@ _GC_TEMPLATE const _Type* _GC_SELF::operator->() const {
 }
 
 _GC_TEMPLATE
-_Type& _GC_SELF::operator[](int i) {
+_Type& _GC_SELF::operator[](int i) {    
     return static_cast<_Type*>(gc_get_object())[i];
 }
 
@@ -126,8 +125,8 @@ _GC_TEMPLATE const _Type& _GC_SELF::operator[](int i) const {
 
 _GC_TEMPLATE
 template<class _OtherType, class _OtherPointerBase>
-gcPointer<_OtherType, _OtherPointerBase, true>
-_GC_SELF::gc_to(typename std::enable_if<std::is_convertible<_Type*,_OtherType*>::value,gcObject_B_>::type* obj) const {
+        gcPointer<_OtherType, _OtherPointerBase, true>
+        _GC_SELF::gc_to(typename std::enable_if<std::is_convertible<_Type*,_OtherType*>::value,gcObject_B_>::type* obj) const {
     return gcPointer<_OtherType, _OtherPointerBase, true>(static_cast<_OtherType*>(obj));
 }
 
@@ -258,8 +257,8 @@ _GC_TEMPLATE const _Type& _GC_SELF::operator[](int i) const {
 
 _GC_TEMPLATE
 template<class _OtherType, class _OtherPointerBase>
-gcPointer<_OtherType, _OtherPointerBase, false>
-_GC_SELF::gc_to(typename std::enable_if<std::is_convertible<_Type*,_OtherType*>::value,gcObject_B_>::type* obj) const {
+        gcPointer<_OtherType, _OtherPointerBase, false>
+        _GC_SELF::gc_to(typename std::enable_if<std::is_convertible<_Type*,_OtherType*>::value,gcObject_B_>::type* obj) const {
     gcPointer<_OtherType, _OtherPointerBase, false> tmp;
     tmp.gc_set_object(static_cast<gcObjectAdapter<_OtherType>*>(obj));
     return tmp;

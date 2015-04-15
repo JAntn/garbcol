@@ -1,6 +1,6 @@
 // File: gcweakpointerbase.h
 // Description:
-// define smart pointer classes
+// Weak pointer implementation
 
 #ifndef _GC_WEAKPOINTERBASE_H
 #define _GC_WEAKPOINTERBASE_H
@@ -13,10 +13,9 @@ namespace gcNamespace {
 class gcObject_B_;
 
 class gcWeakPointer_B_ : public gcPointer_B_{
-
 protected:
 
-    mutable gcObject_B_*                       object;
+    mutable gcObject_B_*                    object;
 
 public:
 
@@ -27,7 +26,10 @@ public:
     using gcPointer_B_::operator<=;
     using gcPointer_B_::operator>=;
 
-    // Pointer contents
+
+    ~gcWeakPointer_B_() override;
+    gcWeakPointer_B_();
+
     bool                                    gc_is_empty() const override;
 
     void                                    gc_copy(const gcPointer_B_&) override;
@@ -49,11 +51,6 @@ public:
     bool                                    gc_is_finalizable() const override;
 
     bool                                    gc_is_weak_pointer() const override;
-
-                                            ~gcWeakPointer_B_() override;
-
-    gcWeakPointer_B_();
-
 };
 
 }

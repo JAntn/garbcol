@@ -9,7 +9,7 @@ gcUniquePointer_B_::gcUniquePointer_B_() {
     // Connect pointer to current scope
     // RAII method
 
-    object = 0;
+    object = nullptr;
 
     if(!_gc_scope_info->from_allocator) {
         static_cast<gcScopeContainer*>(_gc_scope_info->current_scope)->gc_push_back(this);
@@ -17,6 +17,8 @@ gcUniquePointer_B_::gcUniquePointer_B_() {
 }
 
 gcUniquePointer_B_::~gcUniquePointer_B_() {
+
+    _GC_THREAD_WAIT_MARKING;
 
     // Disconnect pointer from scope
     // RAII method
@@ -26,14 +28,18 @@ gcUniquePointer_B_::~gcUniquePointer_B_() {
     }
 }
 
-// for moving operations
 void gcUniquePointer_B_::gc_copy(const gcPointer_B_& other) {
+
+    _GC_THREAD_WAIT_MARKING;
+
     object = other.gc_get_object();
 }
 
 void gcUniquePointer_B_::gc_set_object(gcObject_B_*const obj) {
 
-    if(obj == 0) {
+    _GC_THREAD_WAIT_MARKING;
+
+    if (obj == nullptr) {
         object = obj;
         return;
     }
@@ -42,13 +48,10 @@ void gcUniquePointer_B_::gc_set_object(gcObject_B_*const obj) {
     if(!(obj->gc_is_lvalue())) {
         obj->gc_make_lvalue();
         obj->gc_mark();
-        _gc_collector->heap.push_back(obj);
+        _gc_collector->heap.push_front(obj);
         object = obj;
         return;
     }
-
-    // forbidden but doesn't raise an error
-    //object = obj;
 }
 
 gcObject_B_* gcUniquePointer_B_::gc_get_object() const {
@@ -84,7 +87,7 @@ void gcUniquePointer_B_::gc_mark() const{
 }
 
 bool gcUniquePointer_B_::gc_is_empty() const{
-    return (object == 0);
+    return (object == nullptr);
 }
 
 bool gcUniquePointer_B_::gc_is_marked() const{
@@ -97,15 +100,15 @@ const gcContainer_B_* gcUniquePointer_B_::gc_get_const_childreen() const {
 
 bool gcUniquePointer_B_::gc_check_n_clear() const {
 
-    if (object==0)
+    if (object == nullptr)
         return true;
 
-    if (object->gc_is_finalized()) {
-        object = 0;
+    if(object->gc_is_finalized()) {
+        object = nullptr;
         return true;
     }
-
     return false;
 }
+
 
 }

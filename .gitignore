@@ -42,3 +42,4 @@ Network Trash Folder
 Temporary Items
 .apdisk
 build-garbcol-Desktop_Qt_5_4_0_MinGW_32bit-Debug
+*.user

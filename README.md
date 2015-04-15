@@ -1,12 +1,16 @@
 ﻿# Smart Pointers Garbage Collector
 
-0.04.4
+0.04.5
 
 Smart pointers with mark&sweep garbage collector and multi-thread support.
 
 This library provide tools for programming in C++11 with automatic memory management. It is written for a GNU compiler. 
 
 Provides smart pointers whose contents are freed automatically, multi-thread compatibility, and a collection of containers that 'wrap' some STL classes.
+
+### Changes 0.04.5
+
+Some important changes in declarationof new GC classes. Now, derived classes can be derived and so.
 
 ### Initialization
 
@@ -96,22 +100,50 @@ If a class has a smart pointer member, then it must have the following pattern:
 
 ```C++
 
-class X : public gcObject 
+class FourLegs: public gcObject 
 {
-public:
+    _GC_DECLARE(FourLegs, gcObject)
 
-    gcPointer<X> p;
-
-    X() {
-        gcConnectObject doit(this);
-	//...
+    gc_create(`some_args`) {
+	// ...
     }
 
-    ~X() override {
-        gcDisconnectObject doit(this);
-        //...
+    gc_create(`some_other_args`) {
+	// ...
     }
+
+    gc_destroy() {
+        // ...
+    }
+
+    gcPointer<Leg> p;
 };
+
+
+```
+
+These classes must be derived from gcObject or any other derived from it but only one at once. Then, call to macro _GC_DECLARE as in the example.
+
+Derived types should call to base class constructor. Base constructors are not called automatically. Destructor is called automatically. For example:
+
+```C++
+
+class Dog: public FourLegs
+{
+    _GC_DECLARE(Dog, FourLegs)
+
+    gc_create(char* name) {
+	// ...
+	FourLegs::gc_create({a, b, c, d});
+    }
+
+    gc_destroy() {
+        // ...
+    }
+
+    gcPointer<Dog> friend;
+};
+
 
 ```
 
@@ -119,10 +151,11 @@ Then, it can be used like normal classes:
 
 ```C++
 
-gcPointer<X> p = new X(1);
-p->p = new X(2); 
-p->p->p = p;      // make a circular reference
-p = new X(3);     // X(1) and X(2) are freed
+gcPointer<Dog> p = new Dog("pataner");
+p->friend = new Dog("sarnós"); 
+p->friend->friend = p;               // make a circular reference
+p = new Dog("rabiós");               // pataner and sarnós are freed
+
 
 ```
 
@@ -267,7 +300,7 @@ Pointers to pointers not allowed. You can use an object with a pointer member to
 - bug fixing
 - documentation
 
-It is intended that all features of version (0.04.3) will be forward compatible unless it is not explicitly noticed.
+It is intended that all features of version (0.04.5) will be forward compatible unless it is not explicitly noticed.
 
 ### Experimental
 

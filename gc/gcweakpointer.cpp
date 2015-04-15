@@ -1,14 +1,13 @@
 #define _GC_HIDE_METHODS
 #include "gcweakpointer.h"
-
 namespace gcNamespace{
 
 gcWeakPointer_B_::gcWeakPointer_B_() {
-    object = 0;
+    object = nullptr;
 }
 
 gcWeakPointer_B_::~gcWeakPointer_B_() {
-    // Nothing
+    _GC_THREAD_WAIT_MARKING;
 }
 
 void gcWeakPointer_B_::gc_copy(const gcPointer_B_& other) {
@@ -52,30 +51,29 @@ void gcWeakPointer_B_::gc_mark() const{
 }
 
 bool gcWeakPointer_B_::gc_is_empty() const{
-    return (object == 0);
+    return (object == nullptr);
 }
 
 bool gcWeakPointer_B_::gc_is_marked() const{
     return object->gc_is_marked();
 }
 
-const gcContainer_B_* gcWeakPointer_B_::gc_get_const_childreen() const{
+const gcContainer_B_* gcWeakPointer_B_::gc_get_const_childreen() const {
     return object->gc_get_const_childreen();
 }
 
 bool gcWeakPointer_B_::gc_check_n_clear() const {
 
-    if (object==0)
+    if (object == nullptr)
         return true;
-
 
     if (object->gc_is_finalized()) {
-        object = 0;
+        object = nullptr;
         return true;
     }
-
     return false;
 }
+
 
 }
 

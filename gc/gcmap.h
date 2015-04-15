@@ -5,8 +5,6 @@
 #ifndef _GC_MAP_H
 #define _GC_MAP_H
 
-#include <utility>
-#include <functional>
 #include <map>
 
 #include "gc.h"
@@ -23,12 +21,12 @@ class gcMapIteratorAdapter : public gcIterator_B_ {
 
 public:
 
+    ~gcMapIteratorAdapter() override;
+    gcMapIteratorAdapter(const _Iterator&);
+
     gcIterator_B_*                      gc_next() override;
     const gcPointer_B_*                 gc_get_const_pointer() const override;
     bool                                gc_is_equal(const gcIterator_B_* other) const override;
-
-    ~gcMapIteratorAdapter() override;
-    gcMapIteratorAdapter(const _Iterator&);
 };
 
 #ifndef _GC_HIDE_METHODS
@@ -95,6 +93,8 @@ public:
     gcIterator_B_*                      gc_end() override;
     gcIterator_B_*                      gc_end() const override;
 
+    const gcContainer_B_*               gc_get_const_childreen() const override;
+
     gcPointer<_Type,_ItemPointerBase>&
     operator[](const _Key &);
 
@@ -108,7 +108,6 @@ public:
     bool                        		operator>= (const _GC_SELF& other) const;
     bool                        		operator<= (const _GC_SELF& other) const;
 
-    const gcContainer_B_*               gc_get_const_childreen() const override;
 };
 
 #ifndef _GC_HIDE_METHODS
@@ -261,7 +260,6 @@ public:
 
     const gcPointer<_Type, _ItemPointerBase>&
     operator[] (const _Key&) const;
-
 };
 
 #ifndef _GC_HIDE_METHODS
@@ -289,14 +287,16 @@ _GC_TEMPLATE _GC_SELF& _GC_SELF::operator = (const _GC_SELF& other) {
 }
 
 _GC_TEMPLATE _GC_ADAPTEE& _GC_SELF::operator*() {
+    _GC_THREAD_WAIT_MARKING;
     return *(_GC_CONTAINER_M_->adaptee);
 }
 
-_GC_TEMPLATE const _GC_ADAPTEE& _GC_SELF::operator*() const{
+_GC_TEMPLATE const _GC_ADAPTEE& _GC_SELF::operator*() const{   
     return *(_GC_CONST_CONTAINER_M_->adaptee);
 }
 
 _GC_TEMPLATE _GC_ADAPTEE* _GC_SELF::operator->() {
+    _GC_THREAD_WAIT_MARKING;
     return _GC_CONTAINER_M_->adaptee;
 }
 
@@ -306,8 +306,8 @@ _GC_TEMPLATE const _GC_ADAPTEE* _GC_SELF::operator->() const{
 
 _GC_TEMPLATE
 template<class _OtherType, class _OtherPointerBase>
-gcPointer<_OtherType, _OtherPointerBase, true>
-_GC_SELF::gc_to(typename std::enable_if<std::is_convertible<_Type*,_OtherType*>::value,gcObject_B_>::type* obj) const {
+        gcPointer<_OtherType, _OtherPointerBase, true>
+        _GC_SELF::gc_to(typename std::enable_if<std::is_convertible<_Type*,_OtherType*>::value,gcObject_B_>::type* obj) const {
     return gcPointer<_OtherType, _OtherPointerBase, true>(static_cast<_OtherType*>(obj));
 }
 
@@ -328,7 +328,6 @@ _GC_TEMPLATE gcPointer<_Type, _ItemPointerBase>& _GC_SELF::operator[](const _Key
 _GC_TEMPLATE const gcPointer<_Type, _ItemPointerBase>& _GC_SELF::operator[](const _Key& k) const {
     return (*(_GC_CONST_CONTAINER_M_->adaptee))[k];
 }
-
 
 #endif
 

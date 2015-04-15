@@ -1,9 +1,9 @@
-// File: gcobject.h
+// File: gcptrobjadapter.h
 // Description:
-// pointer contents class
+// spcialization for object adapter for a pointer
 
-#ifndef _GC_OBJECTADAPTER_H
-#define _GC_OBJECTADAPTER_H
+#ifndef _GC_PTROBJADAPTER_H
+#define _GC_PTROBJADAPTER_H
 
 #include "gc.h"
 #include "gcobjectbase.h"
@@ -13,8 +13,7 @@ namespace gcNamespace {
 // forward declare
 template<class, class, bool> class gcPointer;
 
-// Adapter to use non-gcObject derived classes with pointers
-template<class _Type>
+template<template<class, class, bool> class _Type>
 class gcObjectAdapter : public gcObject_B_{
 
     template<class _TypePP, class _PointerBasePP, bool _TypeIsObjectPP>
@@ -29,9 +28,9 @@ protected:
     _Type*                              adaptee;
 
 public:
-    gcObjectAdapter();
-    gcObjectAdapter(_Type*const);
-    ~gcObjectAdapter() override;
+                                        gcObjectAdapter();
+                                        gcObjectAdapter(_Type*const);
+                                        ~gcObjectAdapter() override;
 
     void                                gc_mark() override;
     bool                                gc_is_marked() const override;
@@ -161,4 +160,3 @@ void gcObjectAdapter<_Type>::gc_make_safe_finalizable() {
 }
 
 #endif // _GC_OBJECTADAPTER_H
-

@@ -15,7 +15,7 @@ class gcObjectScope {
 public:
 
     // List of pointers connected to this context.
-    gcScopeContainer*                   childreen;
+    gcScopeContainer                   childreen;
 
     gcObjectScope();
     ~gcObjectScope();
@@ -38,6 +38,7 @@ protected:
 public:
 
     gcObject();
+    gcObject(gc_delegate_t);
     ~gcObject() override;
 
     void                                gc_mark() override;
@@ -64,10 +65,6 @@ public:
 
 // Manages gcObject constructor
 class gcConnectObject{
-
-    // Temporal pointer to parent
-    gcObject*                           parent;
-
 public:
 
     gcConnectObject(gcObject*const);

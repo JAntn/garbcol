@@ -58,17 +58,13 @@ gcIterator_B_* gcScopeContainer::gc_end() const {
 
 void gcScopeContainer::gc_push_back(const gcPointer_B_ *val) {
 
-    // Prevent collector while adding elements
     _GC_THREAD_LOCK;
-
     adaptee.push_back(val);
 }
 
 void gcScopeContainer::gc_pop_back() {
 
-    // Prevent collector while removing elements
     _GC_THREAD_LOCK;
-
     adaptee.pop_back();
 }
 

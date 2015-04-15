@@ -1,18 +1,22 @@
-// RULE 0: WRITE gcCollector new_collector; AT main()
 //
-// RULE 1: IN ORDER TO BE MANAGED BY GARBAGE COLLECTOR,
-//         OBJECTS ARE CREATED WITH 'new' INSIDE OF ASSIGNAMET OF A gcPointer
+// RULE 0:      WRITE gcCollector new_collector; AT main()
 //
-// RULE 2.1: NEW CLASSES THAT HAVE gcPointer MEMBERS MUST BE DERIVED OF gcObject
+// RULE 1:      IN ORDER TO BE MANAGED BY GARBAGE COLLECTOR,
+//              OBJECTS ARE CREATED WITH 'new' INSIDE OF ASSIGNAMET OF A gcPointer
 //
+// RULE 2:      USE gcPointer's CUSTOMIZED CONTAINERS: gcList, gcListPointer, etc
 //
-// RULE 2.2: WRITE gcConnectObject doit(this); AT OBJECT CONSTRUCTOR
-//		   AND gcDisconnectObject doit(this); AT OBJECT DESTRUCTOR
+// RULE 3:      WRITE gcConnectThread doit; AT THE BEGINING OF THREADS OTHER THAN MAIN
 //
+// RULE 4.1:    NEW CLASSES THAT HAVE gcPointer MEMBERS MUST BE DERIVED OF gcObject OR
+//              ANY DERIVED FROM IT BUT ONLY ONE AT ONCE
 //
-// RULE 3: USE gcPointer's CUSTOMIZED CONTAINERS: gcList, gcListPointer, etc
+// RULE 4.2:    CALL MACRO _GC_DECLARE( `this_class`, `base_class` ) WHERE `base_class`
+//              CAN BE gcObject OR ANY DERIVED FROM IT
 //
-// RULE 4: WRITE gcConnectThread doit; AT THE BEGINING OF NEW THREADS
+// RULE 4.2:    USE gc_create AND gc_destroy INSTEAD CONSTRUCTORS AND DESTRUCTORS
+//
+// RULE 5:      POINTERS TO POINTERS AR NOT ALLOWED
 
 #include <iostream>
 #include <string>
@@ -67,44 +71,39 @@ void test_0() {
 // ----------------------------------------------------------------------
 
 
-
 // A class that doesn't have any pointer member
 // doesnt't need any special configuration
 
-class XBase {
+class RockBase {
 public:
     int n;
-    virtual ~XBase(){}
+    virtual ~RockBase(){}
 };
 
-class X : public XBase
+class Rock : public RockBase
 {
 public:
-    X(int a) {
+    Rock(int a) {
         n = a;
-        print("X" + to_string(n) + " created");
+        print("Rock" + to_string(n) + " created");
     }
 
-    ~X() override {
-        print("X" + to_string(n) + " deleted");
-    }
-
-    void say_hi() {
-        print("hi " + to_string(n) + "!");
+    ~Rock() override {
+        print("Rock" + to_string(n) + " deleted");
     }
 };
 
 void test_1() {
 
-    gcPointer<XBase> a = new X(1);
-    gcPointer<X> b = new X(2);
+    gcPointer<RockBase> a = new Rock(1);
+    gcPointer<Rock> b = new Rock(2);
 
-    a = (gcPointer<XBase>) b; // no error check yet
+    a = (gcPointer<RockBase>) b; // no error check yet
 
     // Wait some time until garbage collector do cleaning
     // so we can see if it was done correctly
     this_thread::sleep_for(chrono::milliseconds(1000));
-    print("X1 deleted?");
+    print("Rock1 deleted?");
 
     // Local pointers are destroyed
 }
@@ -114,59 +113,77 @@ void test_1() {
 // A class with pointer members must be
 // configured like this template
 
-class X_gc : public gcObject {
-public:
+class Dog : public gcObject
+{
+    _GC_DECLARE(Dog,gcObject)
 
-    gcPointer<X_gc> p;
-    int n = 0;
+    gcPointer<Dog> dog_ptr;
 
-    X_gc(int a) {
 
-        gcConnectObject do_it(this);
+    void gc_create(int c ) {
 
-        n = a;
-        print("X_gc" + to_string(n) + " created");
+        while(c-->0) print("Guau!");
     }
 
-    ~X_gc() override {
-
-        gcDisconnectObject do_it(this);
-
-        print("X_gc" + to_string(n) + " deleted");
+    void gc_destroy() {
+        print("Grr!");
     }
-
-    void say_hi() {
-        print("hi " + to_string(n) + "!");
-    }
-
 };
 
+class TalkInterface {
+public:
+    virtual void say_hi()=0;
+};
 
-void test_2_sub1(const gcPointer<X_gc>& c3){
+class TalkingDog : public  Dog, public TalkInterface
+{
+    _GC_DECLARE(TalkingDog, Dog)
 
-    // A normal pointer
-    gcPointer<X_gc> nonscoped_c3 = c3;
+    gcPointer<TalkingDog> p;
+    int n;
+
+    void gc_create(int a) {
+        n = a;
+        print("TalkingDog" + to_string(n) + " created");
+        if (n == 1000){ this->Dog::gc_create(1000); }
+    }
+
+    void gc_destroy() {
+        print("TalkingDog" + to_string(n) + " deleted");
+    }
+
+    void say_hi() override {
+        print("hi " + to_string(n) + "!");
+        dog_ptr = p;
+    }
+};
+
+void test_2_sub1(const gcPointer<TalkingDog>& c3){
+
+    // Rock normal pointer
+    gcPointer<TalkingDog> nonscoped_c3 = c3;
 
     // this function does nothing
 }
 
-void test_2_sub2( const gcPointer<X_gc>& c4){
+void test_2_sub2( const gcPointer<TalkingDog>& c4){
 
-    // A scoped pointer
-    gcScopedPointer<X_gc> scoped_c4 = c4;
-    // X_gc2000 will be deleted now since it is scoped here
+    // Rock scoped pointer
+    gcScopedPointer<TalkingDog> scoped_c4 = c4;
+
+    // TalkingDog2000 will be deleted now since it is scoped here
 }
 
 void test_2()
 {
-    gcPointer<X_gc> p;
+    gcPointer<TalkingDog> p;
 
-    p = new X_gc(1);
-    p->p = new X_gc(2);
-    p->p->p = new X_gc(3);
+    p = new TalkingDog(1);
+    p->p = new TalkingDog(2);
+    p->p->p = new TalkingDog(3);
 
     p->p->p->p = p->p;			// circular link
-    p->p = new X_gc(4);         // unlink objects 2 and 3 from root
+    p->p = new TalkingDog(4);         // unlink objects 2 and 3 from root
 
     p->say_hi();                // method calls
     p->p->say_hi();
@@ -175,18 +192,18 @@ void test_2()
     // Wait some time until garbage collector do cleaning
     // so we can see if it was done correctly
     this_thread::sleep_for(chrono::milliseconds(1000));
-    print("X_gc2 X_gc3 deleted?");
+    print("TalkingDog2 TalkingDog3 deleted?");
 
     // This is a gcObject pseudo rvalue
-    X_gc *rval = new X_gc(5);
+    TalkingDog *rval = new TalkingDog(5);
 
-    // X_gc5 now is lvalue and finalizable
-    gcPointer<X_gc> c1 = rval;
+    // TalkingDog5 now is lvalue and finalizable
+    gcPointer<TalkingDog> c1 = rval;
 
     // Add a reference
-    gcPointer<X_gc> c2 = rval;
+    gcPointer<TalkingDog> c2 = rval;
 
-    // make X_gc5 not finalizable
+    // make TalkingDog5 not finalizable
     c1.gc_make_nonfinalizable();
 
     // Remove references
@@ -194,7 +211,7 @@ void test_2()
     c2 = p;
 
     this_thread::sleep_for(chrono::milliseconds(1000));
-    print("X_gc5 NOT deleted?");
+    print("TalkingDog5 NOT deleted?");
 
     // Delete object
     c1 = rval;
@@ -202,39 +219,36 @@ void test_2()
     c1.gc_deallocate();
 
     // test a scoped pointer
-    gcPointer<X_gc> c3 = new X_gc(1000);
-    gcPointer<X_gc> c4 = new X_gc(2000);
+    gcPointer<TalkingDog> c3 = new TalkingDog(1000);
+    gcPointer<TalkingDog> c4 = new TalkingDog(2000);
 
     test_2_sub1(c3);
     test_2_sub2(c4);
 
     this_thread::sleep_for(chrono::milliseconds(1000));
-    print("X_gc2000 deleted?");
+    print("TalkingDog2000 deleted?");
 
     print(to_string(c4 == 0));
 
-    gcUniquePointer<X_gc> c5 = new X_gc(4000);
-    c5 = new X_gc(5000);
+    gcUniquePointer<TalkingDog> c5 = new TalkingDog(4000);
+    c5 = new TalkingDog(5000);
 
     this_thread::sleep_for(chrono::milliseconds(1000));
-    print("X_gc4000 deleted?");
+    print("TalkingDog4000 deleted?");
 
     // Local pointers are destroyed
 }
 
-
-
-
 void test_3(){
 
-    // A list of pointers
-    gcListPointer<X_gc> plist = new gcList<X_gc>;
+    // Rock list of pointers
+    gcListPointer<TalkingDog> plist = new gcList<TalkingDog>;
 
     for (int n = 0; n < 5; n++)
-        plist->push_back( new X_gc(n) );
+        plist->push_back( new TalkingDog(n) );
 
-    gcList<X_gc>::iterator i = plist->begin();
-    *(++i) = new X_gc(10000);
+    gcList<TalkingDog>::iterator i = plist->begin();
+    *(++i) = new TalkingDog(10000);
 
     for (auto p : *plist) {
         print(to_string(p->n));
@@ -243,33 +257,33 @@ void test_3(){
     // Wait some time until garbage collector do cleaning
     // so we can see if it was done correctly
     this_thread::sleep_for(chrono::milliseconds(1000));
-    print("X_gc1 deleted?");
+    print("TalkingDog1 deleted?");
 
-    *plist = {{new X_gc(50),new X_gc(60)}};
+    *plist = {{new TalkingDog(50),new TalkingDog(60)}};
 
     // Local pointers are destroyed
 }
 
 void test_4(){
 
-    gcMapPointer<string,X_gc> pmap = new gcMap<string,X_gc>;
+    gcMapPointer<string,TalkingDog> pmap = new gcMap<string,TalkingDog>;
 
-    pmap["KEY"] = new X_gc(1);
-    pmap["KEY"] = new X_gc(2);
+    pmap["KEY"] = new TalkingDog(1);
+    pmap["KEY"] = new TalkingDog(2);
 
     // Wait some time until garbage collector do cleaning
     // so we can see if it was done correctly
     this_thread::sleep_for(chrono::milliseconds(1000));
-    print("X_gc1 deleted?");
+    print("TalkingDog1 deleted?");
 
     // Local pointers are destroyed
 }
 
 void test_5(){
 
-    gcPointer<X_gc> p1 = new X_gc(1), p2 = new X_gc(2);
+    gcPointer<TalkingDog> p1 = new TalkingDog(1), p2 = new TalkingDog(2);
 
-    gcSetPointer<X_gc> pset = new gcSet<X_gc>;
+    gcSetPointer<TalkingDog> pset = new gcSet<TalkingDog>;
 
     pset->insert(p1);
     pset->insert(p2);
@@ -278,22 +292,22 @@ void test_5(){
     for (auto p : *pset) {
         print(to_string(p->n));
     }
-    print("Set has X_gc1 and X_gc2 one time only?");
+    print("Set has TalkingDog1 and TalkingDog2 one time only?");
 
     // Local pointers are destroyed
 }
 
 void test_6(){
 
-    gcPointer<X_gc> p1 = new X_gc(1), p2 = new X_gc(2);
+    gcPointer<TalkingDog> p1 = new TalkingDog(1), p2 = new TalkingDog(2);
 
-    gcArrayPointer<X_gc,2> parr = new gcArray<X_gc,2>;
+    gcArrayPointer<TalkingDog,2> parr = new gcArray<TalkingDog,2>;
 
     if(parr == parr){
     parr[0]=p1;
     parr[1]=p2;}
 
-    for (gcPointer<X_gc> p : *parr) {
+    for (gcPointer<TalkingDog> p : *parr) {
         print(to_string(p->n));
     }
 
@@ -302,14 +316,15 @@ void test_6(){
 
 void test_7(){
 
-    gcPointer<X_gc> p1 = new X_gc(1);
-    gcWeakPointer<X_gc> wp = p1;
+    gcPointer<TalkingDog> p1 = new TalkingDog(1);
+    gcWeakPointer<TalkingDog> wp = p1;
 
     p1 = 0;
+
     // Wait some time until garbage collector do cleaning
     // so we can see if it was done correctly
     this_thread::sleep_for(chrono::milliseconds(1000));
-    print("X_gc1 deleted?");
+    print("TalkingDog1 deleted?");
 }
 
 void test_8(){
@@ -424,34 +439,36 @@ void thread_fn() {
     print("exit test_2");
 
     this_thread::sleep_for(chrono::milliseconds(1000));
-    print("X_gc1 , X_gc4, X_gc1000 deleted?");
+    print("TalkingDog1 , TalkingDog4, TalkingDog1000 deleted?");
 
     test_3();
     print("exit test_3");
 
     this_thread::sleep_for(chrono::milliseconds(1000));
-    print("X_gc0 , X_gc1000 , X_gc2, X_gc3, X_gc4 deleted?");
+    print("TalkingDog0 , TalkingDog1000 , TalkingDog2, TalkingDog3, TalkingDog4 deleted?");
 
     test_4();
     print("exit test_4");
 
     this_thread::sleep_for(chrono::milliseconds(1000));
-    print("X_gc2 deleted?");
+    print("TalkingDog2 deleted?");
 
     test_5();
     print("exit test_5");
 
     this_thread::sleep_for(chrono::milliseconds(1000));
-    print("X_gc1 , X_gc2 deleted?");
+    print("TalkingDog1 , TalkingDog2 deleted?");
 
     test_6();
     print("exit test_6");
 
     this_thread::sleep_for(chrono::milliseconds(1000));
-    print("X_gc1 , X_gc2 deleted?");
+    print("TalkingDog1 , TalkingDog2 deleted?");
 
     test_7();
     print("exit test_7");
+
+    test_8();
 
     print("exiting thread");
 }
@@ -464,7 +481,7 @@ int main()
     // Time between each mark-sweep event = 300
     // new_collector.sleep_time = 300 (If you do it, make a lock)
 
-    void (*tst_tbl[])() = {test_8, test_1, test_2, test_3, test_4, test_5, test_6, test_7, test_0};
+    void (*tst_tbl[])() = {test_0, test_1, test_2, test_3, test_4, test_5, test_6, test_7, test_8};
 
     for(int tst_num=0; tst_num<9; tst_num++)
     {

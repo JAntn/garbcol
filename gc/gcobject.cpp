@@ -7,19 +7,14 @@ namespace gcNamespace {
 // Called before gcObject constructor and before new pointer members are declared
 gcObjectScope::gcObjectScope() {
 
-    // Create childreen list (without any scope management)
-    childreen = new gcScopeContainer;
-
     // Push current context and set this one
     _gc_scope_info->current_scope_stack.push_back(_gc_scope_info->current_scope);
-    _gc_scope_info->current_scope = childreen;
+    _gc_scope_info->current_scope = &childreen;
 }
 
 // [2]
 // Called inside object's constructor
-gcConnectObject::gcConnectObject(gcObject*const object){
-
-    parent = object;
+gcConnectObject::gcConnectObject(gcObject*const =0){
 
     // Continue at root scope at time of object construction (come out from object scope)
     _gc_scope_info->current_scope = _gc_scope_info->root_scope;
@@ -48,15 +43,12 @@ gcDisconnectObject::gcDisconnectObject(gcObject*const object){
 gcDisconnectObject::~gcDisconnectObject(){
 
     // Change to object's context
-    _gc_scope_info->current_scope = parent->object_scope.childreen;
+    _gc_scope_info->current_scope = &(parent->object_scope.childreen);
 }
 
 // [5]
 // Called after gcObject destructor and before pointer members are deleted
 gcObjectScope::~gcObjectScope() {
-
-    // Free child connections
-    delete childreen;
 
     // Return to previous context
     _gc_scope_info->current_scope = _gc_scope_info->current_scope_stack.back();
@@ -72,6 +64,10 @@ gcObject::~gcObject() {
 }
 
 gcObject::gcObject() {
+    mark = 0;
+}
+
+gcObject::gcObject(gc_delegate_t) {
     mark = 0;
 }
 
@@ -97,7 +93,7 @@ bool gcObject::gc_is_reachable() const {
 }
 
 const gcContainer_B_* gcObject::gc_get_const_childreen() const {
-    return object_scope.childreen;
+    return &(object_scope.childreen);
 }
 
 void gcObject::gc_make_finalizable() {

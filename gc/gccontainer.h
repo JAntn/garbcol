@@ -6,17 +6,20 @@
 #define _GC_CONTAINER_H
 
 #include <deque>
-
 #include "gc.h"
 
 namespace gcNamespace{
+
+class gcPointer_B_;
 
 // iterator interface class
 class gcIterator_B_{
 public:
 
     virtual								~gcIterator_B_() = 0;
-    virtual const gcPointer_B_*         gc_get_const_pointer() const = 0;       // PROTECTION: Garbage collector can't modify pointer objects
+
+    virtual const gcPointer_B_*         gc_get_const_pointer() const = 0;
+
     virtual gcIterator_B_*              gc_next() = 0;
     virtual bool						gc_is_equal(const gcIterator_B_* other) const = 0;
 };
@@ -44,14 +47,11 @@ class gcScopeIterator : public gcIterator_B_{
 public:
 
     ~gcScopeIterator() override;
+    gcScopeIterator(const _Iterator&);
 
     gcIterator_B_*                      gc_next() override;
     const gcPointer_B_*                 gc_get_const_pointer() const override;
-
     bool                                gc_is_equal(const gcIterator_B_* other) const override;
-
-    gcScopeIterator(const _Iterator&);
-
 };
 
 
@@ -65,7 +65,6 @@ public:
     typedef typename std::deque<const gcPointer_B_*>::iterator iterator;
     typedef typename std::deque<const gcPointer_B_*>::const_iterator const_iterator;
     typedef typename std::deque<const gcPointer_B_*> container;
-
 
     ~gcScopeContainer() override;
 
@@ -103,8 +102,6 @@ public:
 
 public:
 
-    // still investigating
-
     inline explicit gcContainerAllocator() {
         //nothing
     }
@@ -136,7 +133,7 @@ public:
 
     inline pointer allocate(
             size_type cnt,
-            typename std::allocator<void>::const_pointer hint = 0)
+            typename std::allocator<void>::const_pointer = 0)
     {
         return reinterpret_cast<pointer>(::operator new(cnt * sizeof(value_type)));
     }

@@ -1,3 +1,7 @@
+// File: gcuniquepointer.h
+// Description:
+// Unique pointer implementation
+
 #ifndef _GC_UNIQUEPOINTER_H
 #define _GC_UNIQUEPOINTER_H
 
@@ -17,6 +21,9 @@ public:
     using gcPointer_B_::operator>;
     using gcPointer_B_::operator<=;
     using gcPointer_B_::operator>=;
+
+    ~gcUniquePointer_B_() override;
+    gcUniquePointer_B_();
 
     bool                                    gc_is_empty() const override;
 
@@ -38,10 +45,6 @@ public:
     bool                                    gc_is_finalizable() const override;
     bool                                    gc_is_weak_pointer() const override;
 
-                                            ~gcUniquePointer_B_() override;
-
-    gcUniquePointer_B_();
-
 };
 
 // 'Generic template' unique pointer class
@@ -53,13 +56,14 @@ class gcUniquePointer;
 
 // Class specialization for gcObject class derived types
 _GC_TEMPLATE class gcUniquePointer<_Type, true> : public gcUniquePointer_B_ {
+protected:
+    using gcUniquePointer_B_::gc_get_object;
 
 public:
 
     using gcUniquePointer_B_::gc_is_empty;
     using gcUniquePointer_B_::gc_copy;
     using gcUniquePointer_B_::gc_set_object;
-    using gcUniquePointer_B_::gc_get_object;
     using gcUniquePointer_B_::gc_get_const_object;
     using gcUniquePointer_B_::gc_mark;
     using gcUniquePointer_B_::gc_is_marked;
@@ -113,6 +117,7 @@ _GC_TEMPLATE _GC_SELF& _GC_SELF::operator = (_Type*const other) {
 }
 
 _GC_TEMPLATE _Type& _GC_SELF::operator*() {
+    _GC_THREAD_WAIT_MARKING;
     return *static_cast<_Type*>(gc_get_object());
 }
 
@@ -121,6 +126,7 @@ _GC_TEMPLATE const _Type& _GC_SELF::operator*() const {
 }
 
 _GC_TEMPLATE _Type* _GC_SELF::operator->() {
+    _GC_THREAD_WAIT_MARKING;
     return static_cast<_Type*>(gc_get_object());
 }
 
@@ -135,7 +141,6 @@ _GC_TEMPLATE _Type& _GC_SELF::operator[](int i) {
 _GC_TEMPLATE const _Type& _GC_SELF::operator[](int i) const {
     return static_cast<_Type*>(gc_get_const_object())[i];
 }
-
 
 #endif
 #undef _GC_SELF

@@ -11,8 +11,8 @@ namespace gcNamespace {
 
 class gcObject_B_;
 
-class gcSharedPointer_B_ : public gcPointer_B_{
 
+class gcSharedPointer_B_ : public gcPointer_B_{
 protected:
 
     mutable gcObject_B_*                    object;
@@ -26,7 +26,9 @@ public:
     using gcPointer_B_::operator<=;
     using gcPointer_B_::operator>=;
 
-    // Pointer contents
+    ~gcSharedPointer_B_() override;
+    gcSharedPointer_B_();
+
     bool                                    gc_is_empty() const override;
 
     void                                    gc_copy(const gcPointer_B_&) override;
@@ -46,10 +48,6 @@ public:
     void                                    gc_make_finalizable() const override;
     bool                                    gc_is_finalizable() const override;
     bool                                    gc_is_weak_pointer() const override;
-
-                                            ~gcSharedPointer_B_() override;
-
-    gcSharedPointer_B_();
 
 };
 

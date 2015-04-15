@@ -38,14 +38,10 @@ public:
 
 #ifndef _GC_HIDE_METHODS
 
-// methods
-
-
 template<class _PointerBase>
 gcScopedPointer_B_<_PointerBase>::~gcScopedPointer_B_() {
     gc_get_object()->gc_deallocate();
 }
-
 
 #endif
 
