@@ -117,7 +117,7 @@ class FourLegs: public gcObject
     // ...
     }
 
-    gcPointer<Leg> p;
+    gcPointer<Leg> legs;
 };
 
 
