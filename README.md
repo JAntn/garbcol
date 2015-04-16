@@ -114,7 +114,7 @@ class FourLegs: public gcObject
     }
 
     gc_destroy() {
-        // ...
+    // ...
     }
 
     gcPointer<Leg> p;
@@ -136,7 +136,8 @@ class Dog: public FourLegs
 
     gc_create(char* name) {
     // ...
-    FourLegs::gc_create({a, b, c, d});
+    FourLegs::gc_create(`some_args`);
+    // ...
     }
 
     gc_destroy() {
@@ -149,7 +150,7 @@ class Dog: public FourLegs
 
 ```
 
-Then, heyt can be used like normal classes:
+Then, they can be used like normal classes:
 
 ```C++
 
@@ -218,7 +219,7 @@ void some_fn2(const gcPointer<int>& p){
 
 ```
 
-Above, GC might leave temporally p with old value before setting it to zero.
+Above, GC might leave temporally p with old value before setting it to zero (in case it is not changed after being released)
 
 All containers are shared pointers by default.
 
