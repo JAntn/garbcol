@@ -144,7 +144,7 @@ class Dog: public FourLegs
     // ...
     }
 
-    gcPointer<Dog> friend;
+    gcPointer<Dog> friendDog;
 };
 
 
@@ -155,9 +155,9 @@ Then, they can be used like normal classes:
 ```C++
 
 gcPointer<Dog> p = new Dog("pataner");
-p->friend = new Dog("sarnós"); 
-p->friend->friend = p;               // make a circular reference
-p = new Dog("rabiós");               // pataner and sarnós are freed
+p->friendDog = new Dog("sarnós"); 
+p->friendDog->friendDog = p;               // make a circular reference
+p = new Dog("rabiós");                     // pataner and sarnós are freed
 
 
 ```
