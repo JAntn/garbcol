@@ -101,9 +101,9 @@ If a class has a smart pointer member, then it must have the following pattern:
 
 ```C++
 
-class FourLegs: public gcObject 
+class Person: public gcObject 
 {
-    GC_CONNECT_OBJECT(FourLegs, gcObject)
+    GC_CONNECT_OBJECT(Person, gcObject)
 
     gc_create(`some_args`) {
 	// ...
@@ -117,7 +117,7 @@ class FourLegs: public gcObject
     // ...
     }
 
-    gcPointer<Leg> legs;
+    gcPointer<string> name;
 };
 
 
@@ -130,9 +130,9 @@ Derived types should call to base class constructor since they are not called au
 
 ```C++
 
-class Dog: public FourLegs
+class Worker: public Person
 {
-    GC_CONNECT_OBJECT(Dog, FourLegs)
+    GC_CONNECT_OBJECT(Worker, Person)
 
     gc_create(char* name) {
     // ...
@@ -144,7 +144,7 @@ class Dog: public FourLegs
     // ...
     }
 
-    gcPointer<Dog> friendDog;
+    gcPointer<Worker> manager;
 };
 
 
@@ -154,10 +154,10 @@ Then, they can be used like normal classes:
 
 ```C++
 
-gcPointer<Dog> p = new Dog("pataner");
-p->friendDog = new Dog("sarnós"); 
-p->friendDog->friendDog = p;               // make a circular reference
-p = new Dog("rabiós");                     // pataner and sarnós are freed
+gcPointer<Worker> p = new Worker("John");
+p->manager = new Worker("Bill"); 
+p->manager->manager = p;                   // make a circular reference
+p = new Worker("Robert");                  // John and Bill are freed
 
 
 ```
