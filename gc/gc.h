@@ -28,7 +28,6 @@ const unsigned char _gc_mark_bit                    = 0x02; // gc marks as conne
 const unsigned char _gc_unreachable_bit             = 0x04; // it was detected as not connected in sweep but will wait to next sweep to remove (just in case)
 const unsigned char _gc_nonfinalizable_bit          = 0x08; // not to delete by garbage mark&sweep algorithm
 const unsigned char _gc_deallocate_bit              = 0x10; // force to deallocate
-const unsigned char _gc_deallocate_is_safe_bit      = 0x20; // deallocate step is safe
 
 // Forward declaration
 class gcContainer_B_;
@@ -79,7 +78,7 @@ class gcCollector {
     gcConnectThread*                    connect_thread;
 
     // At GC cleaning of a thread, store info for correct removing
-    std::list<gcScopeInfo*>             remove_scope_info_stack;
+    std::deque<gcScopeInfo*>             remove_scope_info_stack;
 
     // All objects are referenced by heap
     std::forward_list<gcObject_B_*>     heap;

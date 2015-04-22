@@ -54,8 +54,6 @@ public:
 
     void                                gc_deallocate() override;
     bool                                gc_is_finalized() const override;
-    bool                                gc_is_safe_finalizable() const override;
-    void                                gc_make_safe_finalizable() override;
 
 };
 
@@ -147,15 +145,6 @@ bool gcObjectAdapter<_Type>::gc_is_finalized() const {
     return mark & _gc_deallocate_bit;
 }
 
-template<class _Type>
-bool gcObjectAdapter<_Type>::gc_is_safe_finalizable() const {
-    return mark & _gc_deallocate_is_safe_bit;
-}
-
-template<class _Type>
-void gcObjectAdapter<_Type>::gc_make_safe_finalizable() {
-    mark |= _gc_deallocate_is_safe_bit;
-}
 
 #endif
 

@@ -37,8 +37,6 @@ public:
 
     void                        gc_deallocate() {}
     bool                        gc_is_finalized() const {return false;}
-    bool                        gc_is_safe_finalizable() const {return true;}
-    void                        gc_make_safe_finalizable() {}
 
 };
 

@@ -36,7 +36,6 @@ void gcCollector::gc_free_heap()
     for (gcObject_B_* object : heap)
     {
         if (object->gc_is_finalizable()){
-            object->gc_make_safe_finalizable();
             delete object;
         }
     }
@@ -137,24 +136,22 @@ void gcCollector::gc_sweep()
 
     // Clean thread-finalized stack
 
-    {
-        _GC_THREAD_LOCK;
-        for (auto scope_info_position = remove_scope_info_stack.begin();
-             scope_info_position != remove_scope_info_stack.end();)
-        {
-            auto scope_info = *scope_info_position;
-            scope_info_list.erase(scope_info->position);
-            delete scope_info->root_scope;
-            delete scope_info;
 
-            ++scope_info_position;
-            remove_scope_info_stack.pop_back();
-        }
+    for (auto scope_info_position = remove_scope_info_stack.begin();
+         scope_info_position != remove_scope_info_stack.end();)
+    {
+        auto scope_info = *scope_info_position;
+        scope_info_list.erase(scope_info->position);
+        delete scope_info->root_scope;
+        delete scope_info;
+
+        ++scope_info_position;
+        remove_scope_info_stack.pop_front();
     }
 
     // Remove marked objects
     auto position_prev = heap.before_begin();
-    auto position= position_prev;
+    auto position = position_prev;
     ++position;
 
     while (position != heap.end())
@@ -163,23 +160,12 @@ void gcCollector::gc_sweep()
 
         if (object->gc_is_finalized())
         {
-            if (object->gc_is_safe_finalizable())
-            {
-                heap.erase_after(position_prev);
-                position = position_prev;
-                ++position;
+            heap.erase_after(position_prev);
+            position = position_prev;
+            ++position;
 
-                delete object;
-                continue;
-            }
-            else{
-                object->gc_make_safe_finalizable();
-
-                ++position_prev;
-                position = position_prev;
-                ++position;
-                continue;
-            }
+            delete object;
+            continue;
         }
         else if (object->gc_is_marked())
         {
@@ -187,47 +173,21 @@ void gcCollector::gc_sweep()
             {
                 if (object->gc_is_finalizable())
                 {
-                    if (object->gc_is_safe_finalizable())
-                    {
-                        heap.erase_after(position_prev);
-                        position = position_prev;
-                        ++position;
-                        delete object;
-                        continue;
-                    }
-                    else
-                    {
-                        object->gc_make_safe_finalizable();
 
-                        ++position_prev;
-                        position = position_prev;
-                        ++position;
-                        continue;
-                    }
-                }
-                else{
-                    ++position_prev;
+                    heap.erase_after(position_prev);
                     position = position_prev;
                     ++position;
+                    delete object;
                     continue;
                 }
-
             }
-            else
-            {
-                object->gc_make_unreachable();
 
-                ++position_prev;
-                position = position_prev;
-                ++position;
-                continue;
-            }
+            object->gc_make_unreachable();
         }
 
         ++position_prev;
         position = position_prev;
         ++position;
-
     }
 }
 
