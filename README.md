@@ -140,7 +140,7 @@ class Worker: public Person
 
     gc_create(char* name) {
     // ...
-    FourLegs::gc_create(`some_args`);
+    Person::gc_create(`some_args`);
     // ...
     }
 
