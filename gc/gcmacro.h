@@ -1,18 +1,23 @@
-#ifndef _GC_MACRO
-#define _GC_MACRO
+///////////////////////////////////////////////////////////////////////////////
+// File: gcmacro.h
+// Description:
+// inheritance macro
+
+#ifndef _GC_MACRO_H
+#define _GC_MACRO_H
 
 #define GC_CONNECT_OBJECT(__GC_SELF,__GC_BASE)\
     public:\
     template<class ...Args>\
     __GC_SELF(Args... args) : __GC_BASE(gc_delegate) {\
-        gcConnectObject doit(this);\
+        gcConnectObject connect_object(this);\
         gc_create(args...);\
     }\
     ~__GC_SELF() override {\
-        gcDisconnectObject doit(this);\
+        gcDisconnectObject disconnect_object(this);\
         gc_destroy();\
     }\
     __GC_SELF(gc_delegate_t):__GC_BASE(gc_delegate){}\
 
-#endif // GCMACRO
+#endif // _GC_MACRO_H
 

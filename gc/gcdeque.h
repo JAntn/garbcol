@@ -1,6 +1,7 @@
+///////////////////////////////////////////////////////////////////////////////
 // File: gcdeque.h
 // Description:
-// stl deque wrapper
+// STL deque wrapper
 
 #ifndef _GC_DEQUE_H
 #define _GC_DEQUE_H

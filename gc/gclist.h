@@ -1,6 +1,7 @@
+///////////////////////////////////////////////////////////////////////////////
 // File: gclist.h
 // Description:
-// stl list wrapper
+// STL list wrapper
 
 #ifndef _GC_LIST_H
 #define _GC_LIST_H

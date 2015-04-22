@@ -1,21 +1,18 @@
 //
-// RULE 0:      WRITE gcCollector new_collector; AT main()
+// THIS FILE IS AN INTENSIVE TEST FOR THE GARBAGE COLLECTOR
+// SEE README FOR MORE PLAIN DOCUMENTATION
 //
+
+// RULE 0:      WRITE gcCollector new_collector; AT main()
 // RULE 1:      IN ORDER TO BE MANAGED BY GARBAGE COLLECTOR,
 //              OBJECTS ARE CREATED WITH 'new' INSIDE OF ASSIGNAMET OF A gcPointer
-//
 // RULE 2:      USE gcPointer's CUSTOMIZED CONTAINERS: gcList, gcListPointer, etc
-//
-// RULE 3:      WRITE gcConnectThread doit; AT THE BEGINING OF THREADS OTHER THAN MAIN
-//
+// RULE 3:      WRITE gcConnectThread connect_thread; AT THE BEGINING OF THREADS OTHER THAN MAIN
 // RULE 4.1:    NEW CLASSES THAT HAVE gcPointer MEMBERS MUST BE DERIVED OF gcObject OR
 //              ANY DERIVED FROM IT BUT ONLY ONE AT ONCE
-//
-// RULE 4.2:    CALL MACRO _GC_DECLARE( `this_class`, `base_class` ) WHERE `base_class`
+// RULE 4.2:    CALL MACRO GC_CONNECT_OBJECT( `this_class`, `base_class` ) WHERE `base_class`
 //              CAN BE gcObject OR ANY DERIVED FROM IT
-//
-// RULE 4.2:    USE gc_new AND gc_delete INSTEAD CONSTRUCTORS AND DESTRUCTORS
-//
+// RULE 4.2:    USE gc_create AND gc_destroy AS CONSTRUCTOR AND DESTRUCTOR
 // RULE 5:      POINTERS TO POINTERS AR NOT ALLOWED
 
 #include <iostream>
@@ -29,18 +26,32 @@
 using namespace std;
 using namespace gcNamespace;
 
+///////////////////////////////////////////////////////////////////////////////
+// thread vars
 
 thread_local int thread_x;
 int thread_count = 0;
-const int THREAD_MAX =10;
+const int THREAD_MAX =2;
+std::mutex a_mutex;
 
-// Simple debugging output tool
+///////////////////////////////////////////////////////////////////////////////
+// debugging tools
 
 void print(string str) {
     cout << "thread " << thread_x << ": " << str << "\n";
 }
 
-// ----------------------------------------------------------------------
+void wait_enter_key()
+{
+    cout << "\n[Press <Enter> key to continue to next test]\n\n";
+    char c = '\0';
+    while (c!='\n'){
+        c = getchar();
+    }
+}
+
+///////////////////////////////////////////////////////////////////////////////
+// simple examples
 
 void test_0() {
 
@@ -68,186 +79,188 @@ void test_0() {
     print(*c);
 }
 
-// ----------------------------------------------------------------------
-
-
-// A class that doesn't have any pointer member
+///////////////////////////////////////////////////////////////////////////////
+// standard c++ class example
+//
+// a class that doesn't have any pointer member
 // doesnt't need any special configuration
 
-class RockBase {
+class Std_ClassBase {
 public:
     int n;
-    virtual ~RockBase(){}
+    virtual ~Std_ClassBase(){}
 };
 
-class Rock : public RockBase
+class Std_Class : public Std_ClassBase
 {
 public:
-    Rock(int a) {
+    Std_Class(int a) {
         n = a;
-        print("Rock" + to_string(n) + " created");
+        print("Std_Class" + to_string(n) + " created");
     }
 
-    ~Rock() override {
-        print("Rock" + to_string(n) + " deleted");
+    ~Std_Class() override {
+        print("Std_Class" + to_string(n) + " deleted");
     }
 };
 
 void test_1() {
 
-    gcPointer<RockBase> a = new Rock(1);
-    gcPointer<Rock> b = new Rock(2);
+    gcPointer<Std_ClassBase> a = new Std_Class(1);
+    gcPointer<Std_Class> b = new Std_Class(2);
 
-    a = (gcPointer<RockBase>) b; // no error check yet
+    a = (gcPointer<Std_ClassBase>) b; // no error check yet
 
     // Wait some time until garbage collector do cleaning
     // so we can see if it was done correctly
     this_thread::sleep_for(chrono::milliseconds(1000));
-    print("Rock1 deleted?");
+    print("Std_Class1 deleted?");
 
     // Local pointers are destroyed
 }
 
-// ----------------------------------------------------------------------
+///////////////////////////////////////////////////////////////////////////////
+// GC class example
+//
+// a class with pointer members must be configured like this template
 
-// A class with pointer members must be
-// configured like this template
-
-class Dog : public gcObject
+class GC_BaseClass : public gcObject
 {
-    GC_CONNECT_OBJECT(Dog,gcObject)
+    GC_CONNECT_OBJECT(GC_BaseClass,gcObject)
 
-    gcPointer<Dog> dog_ptr;
+    gcPointer<GC_BaseClass> GC_BaseClass_ptr;
 
-    void gc_create(int c ) {
-
-        while(c-->0) print("Guau!");
+    void gc_create() {
+        //print(string("create GC_BaseClass"));
     }
 
     void gc_destroy() {
-        print("Grr!");
+        //print("destroy GC_BaseClass");
     }
 };
 
-class TalkInterface {
+///////////////////////////////////////////////////////////////////////////////
+// interface
+
+class MsgInterface {
 public:
-    virtual void say_hi()=0;
+    virtual void print_msg()=0;
 };
 
-class TalkingDog : public  Dog, public TalkInterface
-{
-    GC_CONNECT_OBJECT(TalkingDog, Dog)
+///////////////////////////////////////////////////////////////////////////////
+// GC class example
 
-    gcPointer<TalkingDog> p;
+class GC_Class : public  GC_BaseClass, public MsgInterface
+{
+    GC_CONNECT_OBJECT(GC_Class, GC_BaseClass)
+
+    gcPointer<GC_Class> p;
     int n;
 
     void gc_create(int a) {
         n = a;
-        print("TalkingDog" + to_string(n) + " created");
-        if (n == 1000){ this->Dog::gc_create(1); }
+        print("GC_Class" + to_string(n) + " created");
+        this->GC_BaseClass::gc_create();
     }
 
     void gc_destroy() {
-        print("TalkingDog" + to_string(n) + " deleted");
+        print("GC_Class" + to_string(n) + " deleted");
     }
 
-    void say_hi() override {
+    void print_msg() override {
         print("hi " + to_string(n) + "!");
-        dog_ptr = p;
+        GC_BaseClass_ptr = p;
     }
 };
 
-void test_2_sub1(const gcPointer<TalkingDog>& c3){
+void test_2_sub1(const gcPointer<GC_Class>& c3){
 
-    // Rock normal pointer
-    gcPointer<TalkingDog> nonscoped_c3 = c3;
+    // A normal pointer
+    gcPointer<GC_Class> nonscoped_c3 = c3;
 
     // this function does nothing
 }
 
-void test_2_sub2( const gcPointer<TalkingDog>& c4){
+void test_2_sub2( const gcPointer<GC_Class>& c4){
 
-    // Rock scoped pointer
-    gcScopedPointer<TalkingDog> scoped_c4 = c4;
+    // A scoped pointer
+    gcScopedPointer<GC_Class> scoped_c4 = c4;
 
-    // TalkingDog2000 will be deleted now since it is scoped here
+    // GC_Class2000 will be deleted now since it is scoped here
 }
 
 void test_2()
 {
-    gcPointer<TalkingDog> p;
+    gcPointer<GC_Class> p;
 
-    p = new TalkingDog(1);
-    p->p = new TalkingDog(2);
-    p->p->p = new TalkingDog(3);
+    p = new GC_Class(1);
+    p->p = new GC_Class(2);
+    p->p->p = new GC_Class(3);
 
     p->p->p->p = p->p;			// circular link
-    p->p = new TalkingDog(4);         // unlink objects 2 and 3 from root
+    p->p = new GC_Class(4);         // unlink objects 2 and 3 from root
 
-    p->say_hi();                // method calls
-    p->p->say_hi();
+    p->print_msg();                // method calls
+    p->p->print_msg();
 
 
     // Wait some time until garbage collector do cleaning
     // so we can see if it was done correctly
     this_thread::sleep_for(chrono::milliseconds(1000));
-    print("TalkingDog2 TalkingDog3 deleted?");
+    print("GC_Class2 GC_Class3 deleted?");
 
-    // This is a gcObject pseudo rvalue
-    TalkingDog *rval = new TalkingDog(5);
-
-    // TalkingDog5 now is lvalue and finalizable
-    gcPointer<TalkingDog> c1 = rval;
+    // GC_Class5 now is lvalue and finalizable
+    gcPointer<GC_Class> c1 = new GC_Class(5);
 
     // Add a reference
-    gcPointer<TalkingDog> c2 = rval;
+    gcPointer<GC_Class> c2 = c1;
 
-    // make TalkingDog5 not finalizable
+    // make GC_Class5 not finalizable
     c1.gc_make_nonfinalizable();
+    c1.gc_deallocate();
 
-    // Remove references
-    c1 = 0;
-    c2 = p;
 
     this_thread::sleep_for(chrono::milliseconds(1000));
-    print("TalkingDog5 NOT deleted?");
+    print("GC_Class5 NOT deleted?");
 
     // Delete object
-    c1 = rval;
     c1.gc_make_finalizable();
     c1.gc_deallocate();
 
     // test a scoped pointer
-    gcPointer<TalkingDog> c3 = new TalkingDog(1000);
-    gcPointer<TalkingDog> c4 = new TalkingDog(2000);
+    gcPointer<GC_Class> c3 = new GC_Class(1000);
+    gcPointer<GC_Class> c4 = new GC_Class(2000);
 
     test_2_sub1(c3);
     test_2_sub2(c4);
 
     this_thread::sleep_for(chrono::milliseconds(1000));
-    print("TalkingDog2000 deleted?");
+    print("GC_Class2000 deleted?");
 
     print(to_string(c4 == 0));
 
-    gcUniquePointer<TalkingDog> c5 = new TalkingDog(4000);
-    c5 = new TalkingDog(5000);
+    gcUniquePointer<GC_Class> c5 = new GC_Class(4000);
+    c5 = new GC_Class(5000);
 
     this_thread::sleep_for(chrono::milliseconds(1000));
-    print("TalkingDog4000 deleted?");
+    print("GC_Class4000 deleted?");
 
     // Local pointers are destroyed
 }
 
+///////////////////////////////////////////////////////////////////////////////
+// container examples
+
 void test_3(){
 
-    // Rock list of pointers
-    gcListPointer<TalkingDog> plist = new gcList<TalkingDog>;
+    // A list of pointers
+    gcListPointer<GC_Class> plist = new gcList<GC_Class>;
 
     for (int n = 0; n < 5; n++)
-        plist->push_back( new TalkingDog(n) );
+        plist->push_back( new GC_Class(n) );
 
-    gcList<TalkingDog>::iterator i = plist->begin();
-    *(++i) = new TalkingDog(10000);
+    gcList<GC_Class>::iterator i = plist->begin();
+    *(++i) = new GC_Class(10000);
 
     for (auto p : *plist) {
         print(to_string(p->n));
@@ -256,33 +269,33 @@ void test_3(){
     // Wait some time until garbage collector do cleaning
     // so we can see if it was done correctly
     this_thread::sleep_for(chrono::milliseconds(1000));
-    print("TalkingDog1 deleted?");
+    print("GC_Class1 deleted?");
 
-    *plist = {{new TalkingDog(50),new TalkingDog(60)}};
+    *plist = {{new GC_Class(50),new GC_Class(60)}};
 
     // Local pointers are destroyed
 }
 
 void test_4(){
 
-    gcMapPointer<string,TalkingDog> pmap = new gcMap<string,TalkingDog>;
+    gcMapPointer<string,GC_Class> pmap = new gcMap<string,GC_Class>;
 
-    pmap["KEY"] = new TalkingDog(1);
-    pmap["KEY"] = new TalkingDog(2);
+    pmap["KEY"] = new GC_Class(1);
+    pmap["KEY"] = new GC_Class(2);
 
     // Wait some time until garbage collector do cleaning
     // so we can see if it was done correctly
     this_thread::sleep_for(chrono::milliseconds(1000));
-    print("TalkingDog1 deleted?");
+    print("GC_Class1 deleted?");
 
     // Local pointers are destroyed
 }
 
 void test_5(){
 
-    gcPointer<TalkingDog> p1 = new TalkingDog(1), p2 = new TalkingDog(2);
+    gcPointer<GC_Class> p1 = new GC_Class(1), p2 = new GC_Class(2);
 
-    gcSetPointer<TalkingDog> pset = new gcSet<TalkingDog>;
+    gcSetPointer<GC_Class> pset = new gcSet<GC_Class>;
 
     pset->insert(p1);
     pset->insert(p2);
@@ -291,131 +304,163 @@ void test_5(){
     for (auto p : *pset) {
         print(to_string(p->n));
     }
-    print("Set has TalkingDog1 and TalkingDog2 one time only?");
+    print("Set has GC_Class1 and GC_Class2 one time only?");
 
     // Local pointers are destroyed
 }
 
 void test_6(){
 
-    gcPointer<TalkingDog> p1 = new TalkingDog(1), p2 = new TalkingDog(2);
+    gcPointer<GC_Class> p1 = new GC_Class(1), p2 = new GC_Class(2);
 
-    gcArrayPointer<TalkingDog,2> parr = new gcArray<TalkingDog,2>;
+    gcArrayPointer<GC_Class,2> parr = new gcArray<GC_Class,2>;
 
     if(parr == parr){
     parr[0]=p1;
     parr[1]=p2;}
 
-    for (gcPointer<TalkingDog> p : *parr) {
+    for (gcPointer<GC_Class> p : *parr) {
         print(to_string(p->n));
     }
 
     // Local pointers are destroyed
 }
 
+///////////////////////////////////////////////////////////////////////////////
+// weak pointer example
+
 void test_7(){
 
-    gcPointer<TalkingDog> p1 = new TalkingDog(1);
-    gcWeakPointer<TalkingDog> wp = p1;
+    gcPointer<GC_Class> p1 = new GC_Class(1);
+    gcWeakPointer<GC_Class> wp = p1;
 
     p1 = 0;
 
     // Wait some time until garbage collector do cleaning
     // so we can see if it was done correctly
     this_thread::sleep_for(chrono::milliseconds(1000));
-    print("TalkingDog1 deleted?");
+    print("GC_Class1 deleted?");
 }
+
+///////////////////////////////////////////////////////////////////////////////
+// benchmark
 
 void test_8(){
 
-    int max = 0;
-    int min = 1000000;
-    print("Please, Wait. Testing GC interruptions time");
+    int time_tick_max = 0;
+    int time_tick_min = 1000000;
 
-    auto tot_start = std::chrono::steady_clock::now();
+    print("Please, wait. Testing GC interruptions time");
 
-    for(int n=0;n<30; n++) {
+    ///////////////////////////////////////////////////////////////////////////////
 
-        // TICK PROCESS
-        auto tick_start = std::chrono::steady_clock::now();
+    auto
+    time_start = std::chrono::steady_clock::now();
 
-        for(int i=0;  i<100;  i++){
-            gcPointer<int>  x = new int[20];
+    for (int n=0;n<30; n++)
+    {
+        auto
+        time_tick_start = std::chrono::steady_clock::now();
+
+        for (int i=0;  i<100;  i++)
+        {
+            gcPointer<int>  x = new int;
             for(int ii=0; ii<100; ii++) {
-               gcPointer<int>  y = new int[20];
+               gcPointer<int>  y = new int;
                x = y;
             }
         }
 
-        auto tick_end = std::chrono::steady_clock::now();
+        auto
+        time_tick_end = std::chrono::steady_clock::now();
 
-        // UPDATE MAX/MIN
-        int val =  std::chrono::duration_cast<std::chrono::microseconds>(tick_end-tick_start).count();
+        int
+        time_tick_length =  std::chrono::duration_cast<std::chrono::microseconds>(
+                time_tick_end - time_tick_start
+                ).count();
 
-        if(val>max){
-            max = val;
+        if (time_tick_length > time_tick_max){
+            time_tick_max = time_tick_length;
         }
 
-        if(val<min){
-            min = val;
+        if (time_tick_length < time_tick_min){
+            time_tick_min = time_tick_length;
         }
     }
 
-    auto tot_end = std::chrono::steady_clock::now();
+    auto
+    time_end = std::chrono::steady_clock::now();
 
-    int total = std::chrono::duration_cast<std::chrono::microseconds>(tot_end-tot_start).count();
+    ///////////////////////////////////////////////////////////////////////////////
+
+    int
+    time_length = std::chrono::duration_cast<std::chrono::microseconds>(
+                time_end - time_start
+                ).count();
 
     print(string("GC-RESULTS:"));
-    print(string("total mcs  = ") + to_string(total));
-    print(string("max tick  = ") + to_string(max));
-    print(string("min tick  = ") + to_string(min));
-    print(string("max - min = ") + to_string(max-min));
+    print(string("total mcs  = ") + to_string(time_length));
+    print(string("max tick   = ") + to_string(time_tick_max));
+    print(string("min tick   = ") + to_string(time_tick_min));
+    print(string("max - min  = ") + to_string(time_tick_max-time_tick_min));
 
-    max = 0;
-    min = 1000000;
-    print("Please, Wait. Testing standard C++");
+    time_tick_max = 0;
+    time_tick_min = 1000000;
 
-    auto tot_start_std = std::chrono::steady_clock::now();
+    print("[Please, wait. Testing standard C++ time]");
 
-    for(int n=0;n<30; n++) {
+    auto
+    time_start_std = std::chrono::steady_clock::now();
+
+    for (int n=0;n<30; n++) {
 
         // TICK PROCESS
-        auto tick_start_std = std::chrono::steady_clock::now();
+        auto
+        time_tick_start_std = std::chrono::steady_clock::now();
 
-        for(int i=0;  i<100;  i++){
-            int*  x = new int[20];
-            for(int ii=0; ii<100; ii++) {
-               int*  y = new int[20];
-               x = y;
+        for (int i=0;  i<100;  i++){
+            int*  x = new int;
+            for (int ii=0; ii<100; ii++) {
+               int*  y = new int;
                delete y;
+               y = x;
             }
             delete x;
         }
 
-        auto tick_end_std = std::chrono::steady_clock::now();
+        auto
+        time_tick_end_std = std::chrono::steady_clock::now();
 
-        // UPDATE MAX/MIN
-        int val =  std::chrono::duration_cast<std::chrono::microseconds>(tick_end_std-tick_start_std).count();
+        int
+        time_tick_length_std =  std::chrono::duration_cast<std::chrono::microseconds>(
+                    time_tick_end_std-time_tick_start_std
+                    ).count();
 
-        if(val>max){
-            max = val;
+        if (time_tick_length_std > time_tick_max){
+            time_tick_max = time_tick_length_std;
         }
 
-        if(val<min){
-            min = val;
+        if (time_tick_length_std < time_tick_min){
+            time_tick_min = time_tick_length_std;
         }
     }
 
-    auto tot_end_std = std::chrono::steady_clock::now();
+    auto
+    time_end_std = std::chrono::steady_clock::now();
 
-    total = std::chrono::duration_cast<std::chrono::microseconds>(tot_end_std-tot_start_std).count();
+    time_length = std::chrono::duration_cast<std::chrono::microseconds>(
+                time_end_std-time_start_std
+                ).count();
 
-    print(string("GC-RESULTS:"));
-    print(string("total mcs  = ") + to_string(total));
-    print(string("max tick  = ") + to_string(max));
-    print(string("min tick  = ") + to_string(min));
-    print(string("max - min = ") + to_string(max-min));
+    print(string("STD-RESULTS:"));
+    print(string("total mcs  = ") + to_string(time_length));
+    print(string("max tick   = ") + to_string(time_tick_max));
+    print(string("min tick   = ") + to_string(time_tick_min));
+    print(string("max - min  = ") + to_string(time_tick_max-time_tick_min));
 }
+
+///////////////////////////////////////////////////////////////////////////////
+// thread fn
 
 void thread_fn() {
 
@@ -438,31 +483,31 @@ void thread_fn() {
     print("exit test_2");
 
     this_thread::sleep_for(chrono::milliseconds(1000));
-    print("TalkingDog1 , TalkingDog4, TalkingDog1000 deleted?");
+    print("GC_Class1 , GC_Class4, GC_Class1000 deleted?");
 
     test_3();
     print("exit test_3");
 
     this_thread::sleep_for(chrono::milliseconds(1000));
-    print("TalkingDog0 , TalkingDog1000 , TalkingDog2, TalkingDog3, TalkingDog4 deleted?");
+    print("GC_Class0 , GC_Class1000 , GC_Class2, GC_Class3, GC_Class4 deleted?");
 
     test_4();
     print("exit test_4");
 
     this_thread::sleep_for(chrono::milliseconds(1000));
-    print("TalkingDog2 deleted?");
+    print("GC_Class2 deleted?");
 
     test_5();
     print("exit test_5");
 
     this_thread::sleep_for(chrono::milliseconds(1000));
-    print("TalkingDog1 , TalkingDog2 deleted?");
+    print("GC_Class1 , GC_Class2 deleted?");
 
     test_6();
     print("exit test_6");
 
     this_thread::sleep_for(chrono::milliseconds(1000));
-    print("TalkingDog1 , TalkingDog2 deleted?");
+    print("GC_Class1 , GC_Class2 deleted?");
 
     test_7();
     print("exit test_7");
@@ -474,35 +519,28 @@ void thread_fn() {
 
 int main()
 {           
-    /* Init a garbage collected program */
+    // Init a garbage collected program
     gcCollector new_collector;
 
-    // Time between each mark-sweep event = 300
-    // new_collector.sleep_time = 300 (If you do it, make a lock)
+    // new_collector.sleep_time = 100
 
     void (*tst_tbl[])() = {test_0, test_1, test_2, test_3, test_4, test_5, test_6, test_7, test_8};
 
     for(int tst_num=0; tst_num<9; tst_num++)
     {
-        cout << "test " << tst_num << "\n";
-        cout << "--------------------------------------" << "\n";
+        cout << "TEST " << tst_num << "\n";
+        cout << "....................................................." << "\n";
 
         tst_tbl[tst_num]();
 
-        char c = '\0';
-        while (c!='\n'){
-            c = getchar();
-        }
+        wait_enter_key();
     }
 
-    cout << "multy thread test\n";
+    cout << "MULTY THREAD TEST\n";
     cout << "A lot of mess will be shown\n";
-    cout << "--------------------------------------" << "\n";
+    cout << "....................................................." << "\n";
 
-    char c = '\0';
-    while (c!='\n'){
-        c = getchar();
-    }
+    wait_enter_key();
 
     thread new_thread[THREAD_MAX];
 
@@ -511,11 +549,16 @@ int main()
     }
 
     for (int n = 0; n < THREAD_MAX; n++){
-        new_thread[n].join();
+        while(true) {
+            if( new_thread[n].joinable()) {
+                new_thread[n].join();
+                break;
+            }
+        }
     }
 
-    cout << "multy thread test succesfull\n";
-    cout << "--------------------------------------" << "\n";
+    cout << "TEST SUCCESFUL\n";
+    cout << "....................................................." << "\n";
 
     return 0;
 }

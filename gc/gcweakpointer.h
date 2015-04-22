@@ -1,6 +1,7 @@
+///////////////////////////////////////////////////////////////////////////////
 // File: gcweakpointerbase.h
 // Description:
-// Weak pointer implementation
+// weak pointer
 
 #ifndef _GC_WEAKPOINTERBASE_H
 #define _GC_WEAKPOINTERBASE_H
@@ -11,6 +12,9 @@
 namespace gcNamespace {
 
 class gcObject_B_;
+
+///////////////////////////////////////////////////////////////////////////////
+// weak pointer base
 
 class gcWeakPointer_B_ : public gcPointer_B_{
 protected:

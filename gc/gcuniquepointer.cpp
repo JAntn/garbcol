@@ -18,7 +18,7 @@ gcUniquePointer_B_::gcUniquePointer_B_() {
 
 gcUniquePointer_B_::~gcUniquePointer_B_() {
 
-    _GC_THREAD_WAIT_MARKING;
+    //_GC_THREAD_WAIT_MARKING;
 
     // Disconnect pointer from scope
     // RAII method
@@ -30,14 +30,14 @@ gcUniquePointer_B_::~gcUniquePointer_B_() {
 
 void gcUniquePointer_B_::gc_copy(const gcPointer_B_& other) {
 
-    _GC_THREAD_WAIT_MARKING;
+    //_GC_THREAD_WAIT_MARKING;
 
     object = other.gc_get_object();
 }
 
 void gcUniquePointer_B_::gc_set_object(gcObject_B_*const obj) {
 
-    _GC_THREAD_WAIT_MARKING;
+    //_GC_THREAD_WAIT_MARKING;
 
     if (obj == nullptr) {
         object = obj;
@@ -48,7 +48,7 @@ void gcUniquePointer_B_::gc_set_object(gcObject_B_*const obj) {
     if(!(obj->gc_is_lvalue())) {
         obj->gc_make_lvalue();
         obj->gc_mark();
-        _gc_collector->heap.push_front(obj);
+        _gc_collector->gc_heap_push(obj);
         object = obj;
         return;
     }

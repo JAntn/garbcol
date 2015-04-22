@@ -7,7 +7,7 @@ gcWeakPointer_B_::gcWeakPointer_B_() {
 }
 
 gcWeakPointer_B_::~gcWeakPointer_B_() {
-    _GC_THREAD_WAIT_MARKING;
+    //_GC_THREAD_WAIT_MARKING;
 }
 
 void gcWeakPointer_B_::gc_copy(const gcPointer_B_& other) {

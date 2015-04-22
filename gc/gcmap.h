@@ -1,4 +1,5 @@
-// File: gcdeque.h
+///////////////////////////////////////////////////////////////////////////////
+// File: gcmap.h
 // Description:
 // stl map wrapper
 
@@ -12,7 +13,8 @@
 namespace gcNamespace
 {
 
-// GC internal map pointer iterator adapter
+///////////////////////////////////////////////////////////////////////////////
+// iterator wrapper
 
 template<class _Iterator>
 class gcMapIteratorAdapter : public gcIterator_B_ {
@@ -59,8 +61,8 @@ bool gcMapIteratorAdapter<_Iterator>::gc_is_equal(const gcIterator_B_* other) co
 
 #endif
 
-
-// GC pointer map adapter
+///////////////////////////////////////////////////////////////////////////////
+// STL map wrapper
 
 #define _GC_TEMPLATE                    template <class _Key, class _Type, class _Compare, class _ItemPointerBase>
 #define _GC_ADAPTEE                     std::map<_Key, gcPointer<_Type, _ItemPointerBase>, _Compare, gcContainerAllocator< std::pair<const _Key, gcPointer<_Type, _ItemPointerBase> > > >
@@ -73,13 +75,11 @@ class gcMap : public gcObjectAdapter<_GC_ADAPTEE>, public gcContainer_B_ {
 
     using gcObjectAdapter<_GC_ADAPTEE>::adaptee;
 
-    // Any pointer
     template<class _TypePP, class _PointerBasePP, bool _TypeIsObjectPP>
     friend class gcPointer;
 
 public:
 
-    // !!Just most basic implementation of derived types yet
     typedef _GC_ADAPTEE container;
     typedef _GC_ITERATOR iterator;
     typedef _GC_CONST_ITERATOR const_iterator;
@@ -130,14 +130,12 @@ _GC_TEMPLATE gcIterator_B_* _GC_SELF::gc_end() const {
 
 _GC_TEMPLATE _GC_SELF::~gcMap() {
 
-    // push state
     bool tmp = _gc_scope_info->from_allocator;
 
     _gc_scope_info->from_allocator = true;
     delete adaptee;
     adaptee = 0;
 
-    // restore state
     _gc_scope_info->from_allocator = tmp;
 }
 
@@ -194,6 +192,9 @@ _GC_TEMPLATE const gcContainer_B_* _GC_SELF::gc_get_const_childreen() const {
 #undef _GC_ITERATOR
 #undef _GC_CONST_ITERATOR
 
+///////////////////////////////////////////////////////////////////////////////
+// gcPointer specialization
+
 #define _GC_TEMPLATE                    template< class _Key, class _Type, class _Compare, class _PointerBase, class _ItemPointerBase>
 #define	_GC_CONTAINER                   gcMap<_Key, _Type, _Compare, _ItemPointerBase>
 #define _GC_SELF                        gcPointer<_GC_CONTAINER, _PointerBase, true>
@@ -227,7 +228,6 @@ public:
     using _PointerBase::operator<=;
     using _PointerBase::operator>=;
 
-    // !!Just most basic implementation of derived types yet
     typedef _GC_ADAPTEE container;
     typedef typename _GC_ADAPTEE::iterator iterator;
     typedef typename _GC_ADAPTEE::const_iterator const_iterator;
@@ -264,8 +264,6 @@ public:
 
 #ifndef _GC_HIDE_METHODS
 
-// methods
-
 _GC_TEMPLATE _GC_SELF::gcPointer() : _PointerBase() {}
 
 _GC_TEMPLATE _GC_SELF::gcPointer(_GC_CONTAINER*const other) : _PointerBase() {
@@ -287,7 +285,6 @@ _GC_TEMPLATE _GC_SELF& _GC_SELF::operator = (const _GC_SELF& other) {
 }
 
 _GC_TEMPLATE _GC_ADAPTEE& _GC_SELF::operator*() {
-    _GC_THREAD_WAIT_MARKING;
     return *(_GC_CONTAINER_M_->adaptee);
 }
 
@@ -296,7 +293,6 @@ _GC_TEMPLATE const _GC_ADAPTEE& _GC_SELF::operator*() const{
 }
 
 _GC_TEMPLATE _GC_ADAPTEE* _GC_SELF::operator->() {
-    _GC_THREAD_WAIT_MARKING;
     return _GC_CONTAINER_M_->adaptee;
 }
 
@@ -337,6 +333,9 @@ _GC_TEMPLATE const gcPointer<_Type, _ItemPointerBase>& _GC_SELF::operator[](cons
 #undef _GC_ADAPTEE
 #undef _GC_CONTAINER_M_
 #undef _GC_CONST_CONTAINER_M_
+
+///////////////////////////////////////////////////////////////////////////////
+// alias
 
 template<class _Key, class _Type, class _Compare=std::less<_Key> ,
          class _PointerBase = gcSharedPointer_B_, class _ItemPointerBase = gcSharedPointer_B_>

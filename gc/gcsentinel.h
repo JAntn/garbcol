@@ -1,3 +1,8 @@
+///////////////////////////////////////////////////////////////////////////////
+// File: gcsentinel.h
+// Description:
+// sentinel
+
 #ifndef _GC_SENTINEL_H_
 #define _GC_SENTINEL_H_
 
@@ -5,6 +10,9 @@
 #include "gc.h"
 
 namespace gcNamespace{
+
+///////////////////////////////////////////////////////////////////////////////
+// sentinel interface
 
 class gcSentinelObject : public gcObject_B_ {
 public:
@@ -40,5 +48,5 @@ extern gcSentinelObject         _gc_sentinel;
 
 }
 
-#endif // GCSENTINEL
+#endif // _GC_SENTINEL_H_
 

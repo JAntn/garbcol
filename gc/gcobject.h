@@ -1,6 +1,7 @@
+///////////////////////////////////////////////////////////////////////////////
 // File: gcobject.h
 // Description:
-// pointer contents class
+// pointer contents
 
 #ifndef _GC_OBJECT_H
 #define _GC_OBJECT_H
@@ -10,26 +11,33 @@
 
 namespace gcNamespace {
 
-// Has a list of connections to gcPointerBase elements
-class gcObjectScope {
-public:
+///////////////////////////////////////////////////////////////////////////////
+// scope operations
 
-    // List of pointers connected to this context.
+class gcObjectScope {
+
+    friend class gcConnectObject;
+    friend class gcDisconnectObject;
+    friend class gcObject;
+
+    // List of pointers connected to this scope
     gcScopeContainer                   childreen;
+
+public:
 
     gcObjectScope();
     ~gcObjectScope();
 };
 
-// Base class for classes which have gcPointerBase class members
+///////////////////////////////////////////////////////////////////////////////
+// a class that have gcPointer type members must be derived from this class
+
 class gcObject : public gcObject_B_{
 
-    // Used in mark sweep algorithm
     unsigned char                       mark;
 
 protected:
 
-    // Inner scope of this object
     gcObjectScope                       object_scope;
 
     friend class gcConnectObject;
@@ -63,7 +71,9 @@ public:
     void                                gc_make_safe_finalizable() override;
 };
 
-// Manages gcObject constructor
+///////////////////////////////////////////////////////////////////////////////
+// connect disconnet object to GC
+
 class gcConnectObject{
 public:
 
@@ -71,10 +81,8 @@ public:
     ~gcConnectObject();
 };
 
-// Manages gcObject destroy
 class gcDisconnectObject{
 
-    // Temporal pointer to parent
     gcObject*                           parent;
 
 public:
@@ -87,4 +95,4 @@ public:
 
 }
 
-#endif // OBJECT
+#endif // _GC_OBJECT_H

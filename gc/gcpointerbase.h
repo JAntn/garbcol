@@ -1,6 +1,7 @@
+///////////////////////////////////////////////////////////////////////////////
 // File: gcpointerbase.h
 // Description:
-// base pointer class
+// base pointer
 
 #ifndef _GC_POINTERBASE_H
 #define _GC_POINTERBASE_H
@@ -12,12 +13,11 @@ namespace gcNamespace {
 class gcObject_B_;
 class gcNullPointer;
 
-// Interface for pointer objects
+///////////////////////////////////////////////////////////////////////////////
+// interface for GC managed objects
 
 class gcPointer_B_{
 public:
-
-    // Pointer contents
 
     virtual                             ~gcPointer_B_() {}
 
@@ -68,6 +68,9 @@ public:
                                         { return gc_get_const_object()>=other.gc_get_const_object();}
 
 };
+
+///////////////////////////////////////////////////////////////////////////////
+// interface for a null pointer type
 
 class gcNullPointer : public gcPointer_B_{
 protected:

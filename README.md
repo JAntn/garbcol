@@ -1,6 +1,6 @@
 ﻿# Smart Pointers Garbage Collector
 
-0.04.5 fix1
+0.04.6
 
 Smart pointers with mark&sweep garbage collector and multi-thread support.
 
@@ -8,9 +8,13 @@ This library provides tools for programming in C++11 with automatic memory manag
 
 Provides smart pointers whose contents are freed automatically, multi-thread compatibility, and a collection of containers that 'wrap' some STL classes.
 
-### Changes 0.04.5
+### Changes
 
-Some important changes in declaration of new GC classes. Now, derived classes can be derived and so.
+0.04.6
+Internal dessign mistakes corrected
+
+0.04.5
+Declaration of new GC classes changed. Derived classes can be derived and so on.
 
 ### Initialization
 

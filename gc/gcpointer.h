@@ -1,6 +1,7 @@
+///////////////////////////////////////////////////////////////////////////////
 // File: gcpointer.h
 // Description:
-// define smart pointer classes
+// smart pointer
 
 #ifndef _GC_POINTER_H
 #define _GC_POINTER_H
@@ -18,10 +19,12 @@ class gcWeakPointer_B_;
 template<class _Type, class _PointerBase = gcSharedPointer_B_, bool _TypeIsObject = std::is_convertible<_Type*, gcObject_B_*>::value>
 class gcPointer;
 
+///////////////////////////////////////////////////////////////////////////////
+// specialization for gcObject class derived types
+
 #define _GC_SELF gcPointer<_Type, _PointerBase, true>
 #define _GC_TEMPLATE template<class _Type, class _PointerBase>
 
-// Class specialization for gcObject class derived types
 _GC_TEMPLATE class gcPointer<_Type, _PointerBase, true> : public _PointerBase{
 public:
 
@@ -75,8 +78,6 @@ public:
 };
 
 #ifndef _GC_HIDE_METHODS
-
-// methods
 
 _GC_TEMPLATE _GC_SELF::gcPointer() : _PointerBase() {}
 
@@ -149,7 +150,9 @@ _GC_TEMPLATE template<class _OtherType, class _OtherPointerBase>
 #define _GC_SELF gcPointer<_Type, _PointerBase, false>
 #define _GC_TEMPLATE template<class _Type, class _PointerBase>
 
-// Class specialization for non-gcObject derived types
+///////////////////////////////////////////////////////////////////////////////
+// specialization for non-gcObject derived types
+
 _GC_TEMPLATE class gcPointer<_Type, _PointerBase, false> : public _PointerBase{
 public:
 
@@ -315,6 +318,9 @@ bool _GC_SELF::operator >= (const _GC_SELF& other) const{
 #endif
 #undef _GC_SELF
 #undef _GC_TEMPLATE
+
+///////////////////////////////////////////////////////////////////////////////
+// alias
 
 template<class _Type> using gcSharedPointer = gcPointer <_Type, gcSharedPointer_B_>;
 template<class _Type> using gcWeakPointer = gcPointer <_Type, gcWeakPointer_B_>;

@@ -1,8 +1,16 @@
+///////////////////////////////////////////////////////////////////////////////
+// File: gcobjectbase.h
+// Description:
+// object base
+
 #ifndef _GC_OBJECTBASE_H
 #define _GC_OBJECTBASE_H
 namespace gcNamespace{
 
 class gcContainer_B_;
+
+///////////////////////////////////////////////////////////////////////////////
+// most object top base class
 
 class gcObject_B_ {
 public:
@@ -30,6 +38,7 @@ public:
 
     virtual                             ~gcObject_B_() {}
 };
+
 }
 
 #endif // _GC_OBJECTBASE_H

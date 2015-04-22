@@ -1,6 +1,7 @@
-// File: gcobject.h
+///////////////////////////////////////////////////////////////////////////////
+// File: gcobjectadapter.h
 // Description:
-// pointer contents class
+// pointer contents
 
 #ifndef _GC_OBJECTADAPTER_H
 #define _GC_OBJECTADAPTER_H
@@ -10,10 +11,12 @@
 
 namespace gcNamespace {
 
-// forward declare
+// Forward declare
 template<class, class, bool> class gcPointer;
 
-// Adapter to use non-gcObject derived classes with pointers
+///////////////////////////////////////////////////////////////////////////////
+// adapter to use non-gcObject derived classes with pointers
+
 template<class _Type>
 class gcObjectAdapter : public gcObject_B_{
 
@@ -59,8 +62,6 @@ public:
 
 #ifndef _GC_HIDE_METHODS
 
-// methods
-
 template<class _Type>
 gcObjectAdapter<_Type>::gcObjectAdapter() {
     mark = 0;
@@ -81,12 +82,12 @@ gcObjectAdapter<_Type>::~gcObjectAdapter() {
 template<class _Type>
 void gcObjectAdapter<_Type>::gc_mark() {
     mark &= ~_gc_mark_bit;
-    mark |= _gc_collector->mark_bit;
+    mark |= _gc_collector->gc_mark_bit_value;
 }
 
 template<class _Type>
 bool gcObjectAdapter<_Type>::gc_is_marked() const {
-    return (mark & _gc_mark_bit) == (_gc_collector->mark_bit & _gc_mark_bit);
+    return (mark & _gc_mark_bit) == (_gc_collector->gc_mark_bit_value & _gc_mark_bit);
 }
 
 template<class _Type>

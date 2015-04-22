@@ -56,9 +56,6 @@ gcObjectScope::~gcObjectScope() {
 }
 
 
-// gcObject methods
-// ----------------
-
 gcObject::~gcObject() {
     // nothing
 }
@@ -73,11 +70,11 @@ gcObject::gcObject(gc_delegate_t) {
 
 void gcObject::gc_mark() {
     mark &= ~_gc_mark_bit;
-    mark |= _gc_collector->mark_bit;
+    mark |= _gc_collector->gc_mark_bit_value;
 }
 
 bool gcObject::gc_is_marked() const {
-    return (mark & _gc_mark_bit) == (_gc_collector->mark_bit & _gc_mark_bit);
+    return (mark & _gc_mark_bit) == (_gc_collector->gc_mark_bit_value & _gc_mark_bit);
 }
 
 void gcObject::gc_make_reachable() {

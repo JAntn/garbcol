@@ -1,6 +1,7 @@
+///////////////////////////////////////////////////////////////////////////////
 // File: gcpointerbase.h
 // Description:
-// shared pointer class
+// shared pointer
 
 #ifndef _GC_SHAREDPOINTER_H
 #define _GC_SHAREDPOINTER_H
@@ -11,6 +12,8 @@ namespace gcNamespace {
 
 class gcObject_B_;
 
+///////////////////////////////////////////////////////////////////////////////
+// shared pointer base
 
 class gcSharedPointer_B_ : public gcPointer_B_{
 protected:

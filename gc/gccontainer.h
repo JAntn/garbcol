@@ -1,6 +1,7 @@
+///////////////////////////////////////////////////////////////////////////////
 // File: gccontainer.h
 // Description:
-// scontainer interfaces
+// container interfaces
 
 #ifndef _GC_CONTAINER_H
 #define _GC_CONTAINER_H
@@ -12,7 +13,9 @@ namespace gcNamespace{
 
 class gcPointer_B_;
 
+///////////////////////////////////////////////////////////////////////////////
 // iterator interface class
+
 class gcIterator_B_{
 public:
 
@@ -24,7 +27,9 @@ public:
     virtual bool						gc_is_equal(const gcIterator_B_* other) const = 0;
 };
 
+///////////////////////////////////////////////////////////////////////////////
 // container interface class
+
 class gcContainer_B_{
 public:
 
@@ -38,7 +43,9 @@ public:
 
 };
 
+///////////////////////////////////////////////////////////////////////////////
 // scope iterator
+
 template<class _Iterator>
 class gcScopeIterator : public gcIterator_B_{
 
@@ -54,8 +61,9 @@ public:
     bool                                gc_is_equal(const gcIterator_B_* other) const override;
 };
 
-
+///////////////////////////////////////////////////////////////////////////////
 // scope container
+
 class gcScopeContainer : public gcContainer_B_ {
 
     std::deque<const gcPointer_B_*>           adaptee;
@@ -78,7 +86,9 @@ public:
     virtual void                        gc_pop_back();
 };
 
-// Allocator for pointer stl containers
+///////////////////////////////////////////////////////////////////////////////
+// allocator for pointer of STL containers
+
 template<typename _Type>
 class gcContainerAllocator {
 public:

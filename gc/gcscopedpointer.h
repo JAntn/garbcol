@@ -1,3 +1,8 @@
+///////////////////////////////////////////////////////////////////////////////
+// File: gcscopedpointer.h
+// Description:
+// scoped pointer
+
 #ifndef _GC_SCOPEDPOINTER_H
 #define _GC_SCOPEDPOINTER_H
 
@@ -6,6 +11,9 @@
 namespace gcNamespace {
 
 class gcObject_B_;
+
+///////////////////////////////////////////////////////////////////////////////
+// object is destroyed when pointer is deleted
 
 template<class _PointerBase>
 class gcScopedPointer_B_ : public _PointerBase{
@@ -46,5 +54,5 @@ gcScopedPointer_B_<_PointerBase>::~gcScopedPointer_B_() {
 #endif
 
 }
-#endif // GCSCOPEDPOINTER
+#endif // _GC_SCOPEDPOINTER_H
 

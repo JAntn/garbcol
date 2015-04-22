@@ -1,6 +1,7 @@
+///////////////////////////////////////////////////////////////////////////////
 // File: gcuniquepointer.h
 // Description:
-// Unique pointer implementation
+// unique pointer
 
 #ifndef _GC_UNIQUEPOINTER_H
 #define _GC_UNIQUEPOINTER_H
@@ -8,6 +9,9 @@
 #include "gc.h"
 
 namespace gcNamespace {
+
+///////////////////////////////////////////////////////////////////////////////
+// unique pointer base
 
 class gcUniquePointer_B_ : public gcPointer_B_ {
 
@@ -54,7 +58,9 @@ class gcUniquePointer;
 #define _GC_SELF gcUniquePointer<_Type, true>
 #define _GC_TEMPLATE template<class _Type>
 
-// Class specialization for gcObject class derived types
+///////////////////////////////////////////////////////////////////////////////
+// specialization for gcObject types
+
 _GC_TEMPLATE class gcUniquePointer<_Type, true> : public gcUniquePointer_B_ {
 protected:
     using gcUniquePointer_B_::gc_get_object;
@@ -117,7 +123,6 @@ _GC_TEMPLATE _GC_SELF& _GC_SELF::operator = (_Type*const other) {
 }
 
 _GC_TEMPLATE _Type& _GC_SELF::operator*() {
-    _GC_THREAD_WAIT_MARKING;
     return *static_cast<_Type*>(gc_get_object());
 }
 
@@ -126,7 +131,6 @@ _GC_TEMPLATE const _Type& _GC_SELF::operator*() const {
 }
 
 _GC_TEMPLATE _Type* _GC_SELF::operator->() {
-    _GC_THREAD_WAIT_MARKING;
     return static_cast<_Type*>(gc_get_object());
 }
 
@@ -149,7 +153,9 @@ _GC_TEMPLATE const _Type& _GC_SELF::operator[](int i) const {
 #define _GC_SELF gcUniquePointer<_Type, false>
 #define _GC_TEMPLATE template<class _Type>
 
-// Class specialization for gcObject class derived types
+///////////////////////////////////////////////////////////////////////////////
+// Class specialization for non-gcObject derived types
+
 _GC_TEMPLATE class gcUniquePointer<_Type, false> : public gcUniquePointer_B_ {
 
 public:

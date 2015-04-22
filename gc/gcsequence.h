@@ -1,6 +1,7 @@
+///////////////////////////////////////////////////////////////////////////////
 // File: gcsequence.h
 // Description:
-// base class for sequence kind containers
+// base sequence type
 
 #ifndef _GC_SEQUENCE_H
 #define _GC_SEQUENCE_H
@@ -12,7 +13,7 @@
 
 namespace gcNamespace {
 
-
+///////////////////////////////////////////////////////////////////////////////
 // GC internal pointer iterator adapter
 
 template<class _Iterator>
@@ -61,7 +62,9 @@ bool gcSequenceIteratorAdapter<_Iterator>::gc_is_equal(const gcIterator_B_* othe
 
 #endif
 
+////////////////////////////////////////////////////////////////////////////////////////
 // GC internal pointer container adapter (used for list, deque, vector)
+
 #define _GC_TEMPLATE                    template < template<typename,typename> class  _Container, class _Type, class _ItemPointerBase>
 #define _GC_ADAPTEE                     _Container<gcPointer<_Type,_ItemPointerBase>, gcContainerAllocator<gcPointer<_Type,_ItemPointerBase>>>
 #define _GC_ITERATOR                    typename _GC_ADAPTEE::iterator
@@ -73,13 +76,11 @@ class gcSequenceAdapter :  public gcObjectAdapter<_GC_ADAPTEE>, public gcContain
 
     using gcObjectAdapter<_GC_ADAPTEE>::adaptee;
 
-    // Any pointer
     template<class _TypePP, class _PointerBasePP, bool _TypeIsObjectPP>
     friend class gcPointer;
 
 public:
 
-    // !!Just most basic implementation of derived types yet
     typedef _GC_ADAPTEE container;
     typedef _GC_ITERATOR iterator;
     typedef _GC_CONST_ITERATOR const_iterator;
@@ -194,7 +195,8 @@ _GC_TEMPLATE const gcContainer_B_* _GC_SELF::gc_get_const_childreen() const {
 #undef _GC_ITERATOR
 #undef _GC_CONST_ITERATOR
 
-// Class gcPointer specialization for gcContainerAdapter class parameter
+///////////////////////////////////////////////////////////////////////////////
+// gcPointer specialization for gcContainerAdapter
 
 #define _GC_TEMPLATE                    template< template<typename,typename> class _Container, class _Type, class _PointerBase, class _ItemPointerBase>
 #define	_GC_CONTAINER                   gcSequenceAdapter<_Container, _Type, _ItemPointerBase>
@@ -229,7 +231,6 @@ public:
     using _PointerBase::operator<=;
     using _PointerBase::operator>=;
 
-    // !!Just most basic implementation of derived types yet
     typedef _GC_ADAPTEE container;
     typedef typename _GC_ADAPTEE::iterator iterator;
     typedef typename _GC_ADAPTEE::const_iterator const_iterator;
@@ -267,8 +268,6 @@ public:
 
 #ifndef _GC_HIDE_METHODS
 
-// methods
-
 _GC_TEMPLATE _GC_SELF::gcPointer() : _PointerBase() {}
 
 _GC_TEMPLATE _GC_SELF::gcPointer(_GC_CONTAINER*const other) : _PointerBase() {
@@ -290,12 +289,10 @@ _GC_TEMPLATE _GC_SELF& _GC_SELF::operator = (const _GC_SELF& other) {
 }
 
 _GC_TEMPLATE _GC_ADAPTEE& _GC_SELF::operator*() {
-    _GC_THREAD_WAIT_MARKING;
     return *(_GC_CONTAINER_M_->adaptee);
 }
 
 _GC_TEMPLATE _GC_ADAPTEE* _GC_SELF::operator->() {
-    _GC_THREAD_WAIT_MARKING;
     return _GC_CONTAINER_M_->adaptee;
 }
 
