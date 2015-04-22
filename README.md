@@ -127,7 +127,10 @@ class Person: public gcObject
 
 ```
 
-These classes must be derived from gcObject or any other derived from it, and only one at once. In addition, they can inherit a class without any constructor. Then, call to macro GC_CONNECT_OBJECT as in the example.
+These classes must be derived from gcObject class or any other derived class from it, and only one at once. 
+
+In addition, they can inherit a class without any constructor. 
+Then, call to macro GC_CONNECT_OBJECT as in the example.
 
 
 Derived types should call to base class constructor since they are not called automatically. Destructor is called automatically. For example:
