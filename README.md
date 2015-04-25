@@ -1,6 +1,6 @@
 ﻿# Smart Pointers Garbage Collector
 
-0.04.6
+0.04.7
 
 Smart pointers with mark&sweep garbage collector and multi-thread support.
 
@@ -9,6 +9,13 @@ This library provides tools for programming in C++11 with automatic memory manag
 Provides smart pointers whose contents are freed automatically, multi-thread compatibility, and a collection of containers that 'wrap' some STL classes.
 
 ### Changes
+
+0.04.7
+First optimizations
+Better unique pointer and weak pointer dessign and type casting operations
+Rvalue lvalue internal implementations
+Tick-Time factor standard c++ reduced to 10.
+Average-Time factor lower than standard C++ (new n delete issues?)
 
 0.04.6
 Internal dessign mistakes corrected
@@ -118,7 +125,7 @@ class Person: public gcObject
     }
 
     gc_destroy() {
-    // ...
+    	// ...
     }
 
     gcPointer<string> name;
@@ -142,13 +149,13 @@ class Worker: public Person
     GC_CONNECT_OBJECT(Worker, Person)
 
     gc_create(char* name) {
-    // ...
-    Person::gc_create(`some_args`);
-    // ...
+    	// ...
+    	Person::gc_create(`some_args`);
+    	// ...
     }
 
     gc_destroy() {
-    // ...
+    	// ...
     }
 
     gcPointer<Worker> manager;
@@ -178,7 +185,7 @@ If threads are used, they must connect to garbage collector first:
 ```C++
 
 void thread_fn() {         
-    gcConnectThread doit;
+    gcConnectThread connect_thread;
     //...
 }
 
@@ -243,12 +250,12 @@ You can build other pointers using template parameters.
     // scoped pointer building
     gcPointer< int, gcScopedPointer_B_<gcWeakPointer_B_>> weak_n_scoped_int;
 
-    // unique pointers must be explicit
-    gcUniquePointer<int> unique;
+    // scoped pointer building
+    gcPointer< int, gcUniquePointer_B_> unique;
     
 ```
 
-You can protect and object of being deleted.
+You can protect an object of being deleted.
 
 ```C++
 
@@ -281,7 +288,7 @@ You can force deallocation.
 
 Pointers cannot be builded in global scope (or be static). 
 
-Be careful if you mix smart pointers and old ones for an object. Specially if it is a non-gcObject type.
+Be careful if you mix smart pointers and standard ones for an object. Specially if it is a non-gcObject type.
 
 ```C++
 
@@ -302,7 +309,7 @@ void some_fn() {
 
 gcObject derived classes are protected against the above behaviour.
 
-Twenty times slower than c++ standard worse case (It is not optimized yet)
+Ten times slower than c++ standard worse case (Early optimization)
 
 Pointers to pointers not allowed. You can use an object with a pointer member to get this functionality.
 
@@ -310,7 +317,7 @@ Pointers to pointers not allowed. You can use an object with a pointer member to
 - bug fixing
 - documentation
 
-It is intended that all features of version (0.04.5) will be forward compatible unless it is not explicitly noticed.
+It is intended that all features of version (0.04.7) will be forward compatible unless it is not explicitly noticed.
 
 ### Experimental
 

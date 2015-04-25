@@ -24,7 +24,10 @@ public:
     virtual bool                        gc_is_empty() const = 0;
 
     virtual void                        gc_copy(const gcPointer_B_&) = 0;
-    virtual void                        gc_set_object(gcObject_B_*const) = 0;
+    virtual void                        gc_copy(gcPointer_B_&&) = 0;
+
+    virtual void                        gc_set_object(gcObject_B_*const&) = 0;
+    virtual void                        gc_set_object(gcObject_B_*&&) = 0;
 
     virtual gcObject_B_*                gc_get_object() const = 0;
     virtual const gcObject_B_*          gc_get_const_object() const = 0;
@@ -85,7 +88,9 @@ public:
 
     bool                                gc_is_empty() const override { return true;}
     void                                gc_copy(const gcPointer_B_&) override {}
-    void                                gc_set_object(gcObject_B_*const) override {}
+    void                                gc_copy(gcPointer_B_&&) override {}
+    void                                gc_set_object(gcObject_B_*const&) override {}
+    void                                gc_set_object(gcObject_B_*&&) override {}
     const gcObject_B_*                  gc_get_const_object() const override {return nullptr;}
     void                                gc_mark() const override {}
     bool                                gc_is_marked() const override {return true;}

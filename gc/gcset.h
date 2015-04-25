@@ -223,19 +223,19 @@ public:
     typedef typename _GC_ADAPTEE::const_iterator const_iterator;
 
     gcPointer();
-    gcPointer(_GC_CONTAINER*const other);
+    gcPointer(_GC_CONTAINER*const& other);
+    gcPointer(_GC_CONTAINER*&& other);
     gcPointer(const _GC_SELF& other);
+    gcPointer(_GC_SELF&& other);
 
-    _GC_SELF&                           operator= (_GC_CONTAINER*const other);
+    _GC_SELF&                           operator= (_GC_CONTAINER*const& other);
+    _GC_SELF&                           operator= (_GC_CONTAINER*&& other);
     _GC_SELF&                           operator= (const _GC_SELF& other);
+    _GC_SELF&                           operator= (_GC_SELF&& other);
     _GC_ADAPTEE&                        operator*();
     _GC_ADAPTEE*                        operator->();
     const _GC_ADAPTEE&                  operator*() const;
     const _GC_ADAPTEE*                  operator->() const;
-
-    template<class _OtherType, class _OtherPointerBase>
-    gcPointer<_OtherType, _OtherPointerBase, true>
-    gc_to(typename std::enable_if<std::is_convertible<_Type*,_OtherType*>::value,gcObject_B_>::type*) const;
 
     template<class _Other, class _OtherPointerBase>
     operator gcPointer<_Other,_OtherPointerBase>();
@@ -251,21 +251,69 @@ public:
 
 _GC_TEMPLATE _GC_SELF::gcPointer() : _PointerBase() {}
 
-_GC_TEMPLATE _GC_SELF::gcPointer(_GC_CONTAINER*const other) : _PointerBase() {
+_GC_TEMPLATE _GC_SELF::gcPointer(_GC_CONTAINER*const& other) : _PointerBase() {
+
+    static_assert(std::is_base_of<gcSharedPointer_B_,_PointerBase>::value,
+                  "unique pointer initialization from lvalue");
+
+    static_assert(!std::is_base_of<gcWeakPointer_B_,_PointerBase>::value,
+                   "referencing object to weak pointer directly" );
+
     gc_set_object(other);
 }
 
+_GC_TEMPLATE _GC_SELF::gcPointer(_GC_CONTAINER*&& other) : _PointerBase() {
+
+    static_assert(!std::is_base_of<gcWeakPointer_B_,_PointerBase>::value,
+                   "referencing object to weak pointer directly" );
+
+    gc_set_object(std::move(other));
+}
+
 _GC_TEMPLATE _GC_SELF::gcPointer(const _GC_SELF& other) : _PointerBase() {
+
+    static_assert(std::is_base_of<gcSharedPointer_B_,_PointerBase>::value,
+                  "unique pointer initialization from lvalue");
+
     gc_copy(other);
 }
 
-_GC_TEMPLATE _GC_SELF& _GC_SELF::operator = (_GC_CONTAINER*const other) {
+_GC_TEMPLATE _GC_SELF::gcPointer(_GC_SELF&& other) : _PointerBase() {
+    gc_copy(std::move(other));
+}
+
+_GC_TEMPLATE _GC_SELF& _GC_SELF::operator = (_GC_CONTAINER*const& other) {
+
+    static_assert(std::is_base_of<gcSharedPointer_B_,_PointerBase>::value,
+                  "unique pointer initialization from lvalue");
+
+    static_assert(!std::is_base_of<gcWeakPointer_B_,_PointerBase>::value,
+                   "referencing object to weak pointer directly" );
+
     gc_set_object(other);
     return *this;
 }
 
+_GC_TEMPLATE _GC_SELF& _GC_SELF::operator = (_GC_CONTAINER*&& other) {
+
+    static_assert(!std::is_base_of<gcWeakPointer_B_,_PointerBase>::value,
+                   "referencing object to weak pointer directly" );
+
+    gc_set_object(std::move(other));
+    return *this;
+}
+
 _GC_TEMPLATE _GC_SELF& _GC_SELF::operator = (const _GC_SELF& other) {
+
+    static_assert(std::is_base_of<gcSharedPointer_B_,_PointerBase>::value,
+                  "unique pointer initialization from lvalue");
+
     gc_copy(other);
+    return *this;
+}
+
+_GC_TEMPLATE _GC_SELF& _GC_SELF::operator = (_GC_SELF&& other) {
+    gc_copy(std::move(other));
     return *this;
 }
 
@@ -286,20 +334,37 @@ _GC_TEMPLATE const _GC_ADAPTEE* _GC_SELF::operator->() const{
 }
 
 _GC_TEMPLATE
-template<class _OtherType, class _OtherPointerBase>
-        gcPointer<_OtherType, _OtherPointerBase, true>
-        _GC_SELF::gc_to(typename std::enable_if<std::is_convertible<_Type*,_OtherType*>::value,gcObject_B_>::type* obj) const {
-    return gcPointer<_OtherType, _OtherPointerBase, true>(static_cast<_OtherType*>(obj));
-} // (.....)
+template<class _OtherType, class _OtherPointerBase> _GC_SELF::operator gcPointer<_OtherType, _OtherPointerBase>(){
 
-_GC_TEMPLATE
-template<class _Other, class _OtherPointerBase> _GC_SELF::operator gcPointer<_Other, _OtherPointerBase>(){
-    return gc_to<_Other, _OtherPointerBase>(gc_get_object());
+    static_assert(std::is_convertible<_Type*,_OtherType*>::value,
+                  "object type is not convertible to other object type");
+
+    static_assert(!std::is_base_of<gcUniquePointer_B_,_OtherPointerBase>::value,
+                  "unique pointer casting forbidden");
+
+    static_assert(!std::is_base_of<gcUniquePointer_B_,_PointerBase>::value,
+                  "unique pointer casting forbidden");
+
+    gcPointer<_OtherType, _OtherPointerBase, true> tmp;
+    tmp.gc_copy(*this);
+    return tmp;
 }
 
 _GC_TEMPLATE
-template<class _Other, class _OtherPointerBase> _GC_SELF::operator const gcPointer<_Other, _OtherPointerBase>() const{
-    return gc_to<_Other, _OtherPointerBase>(gc_get_object());
+template<class _OtherType, class _OtherPointerBase> _GC_SELF::operator const gcPointer<_OtherType, _OtherPointerBase>() const{
+
+    static_assert(std::is_convertible<_Type*,_OtherType*>::value,
+                  "object type is not convertible to other object type");
+
+    static_assert(!std::is_base_of<gcUniquePointer_B_,_OtherPointerBase>::value,
+                  "unique pointer casting forbidden");
+
+    static_assert(!std::is_base_of<gcUniquePointer_B_,_PointerBase>::value,
+                  "unique pointer casting forbidden");
+
+    gcPointer<_OtherType, _OtherPointerBase, true> tmp;
+    tmp.gc_copy(*this);
+    return tmp;
 }
 
 #endif

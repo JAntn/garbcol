@@ -35,7 +35,10 @@ public:
     bool                                    gc_is_empty() const override;
 
     void                                    gc_copy(const gcPointer_B_&) override;
-    void                                    gc_set_object(gcObject_B_*const) override;
+    void                                    gc_copy(gcPointer_B_&&) override;
+
+    void                                    gc_set_object(gcObject_B_*const&) override;
+    void                                    gc_set_object(gcObject_B_*&&) override;
 
     gcObject_B_*                            gc_get_object() const override;
     const gcObject_B_*                      gc_get_const_object() const override;

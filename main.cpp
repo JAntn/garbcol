@@ -31,7 +31,7 @@ using namespace gcNamespace;
 
 thread_local int thread_x;
 int thread_count = 0;
-const int THREAD_MAX =2;
+const int THREAD_MAX =4;
 std::mutex a_mutex;
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -109,7 +109,7 @@ void test_1() {
     gcPointer<Std_ClassBase> a = new Std_Class(1);
     gcPointer<Std_Class> b = new Std_Class(2);
 
-    a = (gcPointer<Std_ClassBase>) b; // no error check yet
+    a = (gcPointer<Std_ClassBase>) b;
 
     // Wait some time until garbage collector do cleaning
     // so we can see if it was done correctly
@@ -160,7 +160,7 @@ class GC_Class : public  GC_BaseClass, public MsgInterface
     void gc_create(int a) {
         n = a;
         print("GC_Class" + to_string(n) + " created");
-        this->GC_BaseClass::gc_create();
+        GC_BaseClass::gc_create();
     }
 
     void gc_destroy() {
@@ -215,6 +215,7 @@ void test_2()
     // Add a reference
     gcPointer<GC_Class> c2 = c1;
 
+
     // make GC_Class5 not finalizable
     c1.gc_make_nonfinalizable();
     c1.gc_deallocate();
@@ -239,8 +240,13 @@ void test_2()
 
     print(to_string(c4 == 0));
 
-    gcUniquePointer<GC_Class> c5 = new GC_Class(4000);
-    c5 = new GC_Class(5000);
+    gcUniquePointer<GC_BaseClass> c5 = new GC_Class(4000);
+
+    //gcUniquePointer<GC_Class> c6(new GC_Class(5000));
+    //c5 = c6; error: casting is forbbiden for unique pointers
+
+    //gcUniquePointer<GC_BaseClass> c6(new GC_Class(5000));
+    //c5 = c6; error: assignation from lvalue
 
     this_thread::sleep_for(chrono::milliseconds(1000));
     print("GC_Class4000 deleted?");
@@ -408,6 +414,7 @@ void test_8(){
     time_tick_min = 1000000;
 
     print("[Please, wait. Testing standard C++ time]");
+    this_thread::sleep_for(chrono::milliseconds(1000));
 
     auto
     time_start_std = std::chrono::steady_clock::now();

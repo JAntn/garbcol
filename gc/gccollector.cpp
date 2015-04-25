@@ -22,7 +22,6 @@ gcConnectThread::gcConnectThread()
 gcConnectThread::~gcConnectThread()
 {
     _GC_THREAD_LOCK;
-
     _gc_collector->remove_scope_info_stack.push_back(scope_info);
 }
 
@@ -33,8 +32,7 @@ void gcCollector::gc_heap_push(gcObject_B_*const object)
 
 void gcCollector::gc_free_heap()
 {
-    for (gcObject_B_* object : heap)
-    {
+    for (gcObject_B_* object : heap){
         if (object->gc_is_finalizable()){
             delete object;
         }
@@ -173,7 +171,6 @@ void gcCollector::gc_sweep()
             {
                 if (object->gc_is_finalizable())
                 {
-
                     heap.erase_after(position_prev);
                     position = position_prev;
                     ++position;
@@ -181,7 +178,6 @@ void gcCollector::gc_sweep()
                     continue;
                 }
             }
-
             object->gc_make_unreachable();
         }
 

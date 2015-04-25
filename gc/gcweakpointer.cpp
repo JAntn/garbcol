@@ -2,20 +2,31 @@
 #include "gcweakpointer.h"
 namespace gcNamespace{
 
+// Fake smart pointer
+
 gcWeakPointer_B_::gcWeakPointer_B_() {
     object = nullptr;
 }
 
-gcWeakPointer_B_::~gcWeakPointer_B_() {
-    //_GC_THREAD_WAIT_MARKING;
-}
+gcWeakPointer_B_::~gcWeakPointer_B_() {}
 
 void gcWeakPointer_B_::gc_copy(const gcPointer_B_& other) {
     object = other.gc_get_object();
 }
 
-void gcWeakPointer_B_::gc_set_object(gcObject_B_*const obj) {
-    object = obj;
+void gcWeakPointer_B_::gc_copy(gcPointer_B_&& other) {
+    object = other.gc_get_object();
+}
+
+void gcWeakPointer_B_::gc_set_object(gcObject_B_*const& obj) {
+
+    throw std::invalid_argument( "referencing object to weak pointer directly" );
+
+}
+
+void gcWeakPointer_B_::gc_set_object(gcObject_B_*&& obj) {
+
+    throw std::invalid_argument( "referencing object to weak pointer directly" );
 }
 
 gcObject_B_* gcWeakPointer_B_::gc_get_object() const {

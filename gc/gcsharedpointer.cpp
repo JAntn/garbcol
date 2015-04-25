@@ -6,7 +6,6 @@ namespace gcNamespace {
 
 gcSharedPointer_B_::gcSharedPointer_B_() {
 
-
     // Connect pointer to current scope
     // RAII method
 
@@ -19,8 +18,6 @@ gcSharedPointer_B_::gcSharedPointer_B_() {
 
 gcSharedPointer_B_::~gcSharedPointer_B_() {
 
-    //_GC_THREAD_WAIT_MARKING;
-
     // Disconnect pointer from scope
     // RAII method
 
@@ -31,31 +28,48 @@ gcSharedPointer_B_::~gcSharedPointer_B_() {
 
 void gcSharedPointer_B_::gc_copy(const gcPointer_B_& other) {
 
-    //_GC_THREAD_WAIT_MARKING;
+    object = other.gc_get_object();
+}
+
+void gcSharedPointer_B_::gc_copy(gcPointer_B_&& other) {
 
     object = other.gc_get_object();
 }
 
-void gcSharedPointer_B_::gc_set_object(gcObject_B_*const obj) {
+void gcSharedPointer_B_::gc_set_object(gcObject_B_*&& obj) {
 
-    //_GC_THREAD_WAIT_MARKING;
-
-    if (obj == nullptr) {
-        object = obj;
-        return;
-    }
-
-    // rvalue simulation
-    if(!(obj->gc_is_lvalue())) {
-
-        obj->gc_make_lvalue();
-        obj->gc_mark();
-        _gc_collector->gc_heap_push(obj);
-        object = obj;
-        return;
-    }
+    // Note:
+    // `object` and `obj` are not checked to be the same object
+    // If you use std::move(obj), be sure that obj is not pushed to heap yet
 
     object = obj;
+
+    if (obj != nullptr) {
+
+        // Since it is a new object, push it to heap
+        _gc_collector->gc_heap_push(obj);
+    }
+}
+
+void gcSharedPointer_B_::gc_set_object(gcObject_B_ *const& obj) {
+
+    // Assigning a object created outside a pointer context?
+    // Generating lvale simulation
+    // Otherwise, assignation should be using gc_copy
+
+    object = obj;
+
+    if (obj != nullptr)
+    {
+        _GC_THREAD_LOCK;
+
+        if (!obj->gc_is_lvalue())
+        {
+            obj->gc_make_lvalue();
+            _gc_collector->gc_heap_push(obj);
+        }
+    }
+
 }
 
 gcObject_B_* gcSharedPointer_B_::gc_get_object() const {
