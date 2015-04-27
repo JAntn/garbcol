@@ -14,8 +14,7 @@ Provides smart pointers whose contents are freed automatically, multi-thread com
 First optimizations
 Better unique pointer and weak pointer dessign and type casting operations
 Rvalue lvalue internal implementations
-Tick-Time factor standard c++ reduced to 10.
-Average-Time factor lower than standard C++ (new n delete issues?)
+Tick-Time factor standard c++ reduced to 20.
 
 0.04.6
 Internal dessign mistakes corrected
@@ -250,7 +249,7 @@ You can build other pointers using template parameters.
     // scoped pointer building
     gcPointer< int, gcScopedPointer_B_<gcWeakPointer_B_>> weak_n_scoped_int;
 
-    // scoped pointer building
+    // unique pointer building
     gcPointer< int, gcUniquePointer_B_> unique;
     
 ```
